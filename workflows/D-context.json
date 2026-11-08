@@ -1,0 +1,168 @@
+{
+  "id": "CLContext0000001",
+  "name": "ContextLedger · D / Retrieve trusted context",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 01 · Authenticate\nThe same endpoint serves the Review Desk, CLI and MCP tool.",
+        "width": 450,
+        "height": 335,
+        "color": 7
+      },
+      "id": "25878eb8-6696-e698-c6f6-b43c7af6f168",
+      "name": "01 Resolve identity",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 02 · Filter before matching\nCheck source and version groups first. Match a taxonomy alias, verify freshness, then return cited context or abstain.",
+        "width": 540,
+        "height": 335,
+        "color": 6
+      },
+      "id": "4214a32f-be3a-af19-c7f3-292fc51626c9",
+      "name": "02 Authorize and answer",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        450,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "contextledger/context",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "5f257b22-55cd-ca63-d070-6fddabfd13bf",
+      "name": "Ask a knowledge question",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        50,
+        165
+      ],
+      "webhookId": "bf55cf04-de38-cf0c-0405-1c10c95e473a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.CONTEXTLEDGER_INTERNAL_URL || 'http://127.0.0.1:5679') + '/snapshot' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ledger-Key",
+              "value": "={{ $env.CONTEXTLEDGER_INTERNAL_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ authorization: $('Ask a knowledge question').first().json.headers?.authorization ?? null }) }}",
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "f43a4f43-0b7b-b80e-5f92-27442f407c5e",
+      "name": "Resolve actor and read ledger",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        245,
+        165
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { createHash, randomUUID } = require('crypto');\nconst sha = value => createHash('sha256').update(value).digest('hex');\nconst now = new Date().toISOString();\nconst daysAfter = (date, days) => new Date(Date.parse(date) + days * 86400000).toISOString();\nconst reply = (httpCode, payload) => ({ httpCode, payload, writes: [] });\nconst identityError = snapshot => snapshot.actor\n  ? reply(403, { status: 'denied' })\n  : reply(401, { status: 'authentication_required' });\nconst put = (collection, row) => ({ collection, row });\nconst audit = (event, actor, fields) => put('audit', { id: randomUUID(), event, actor, at: now, ...fields });\nconst clean = value => typeof value === 'string' ? value.trim() : '';\nconst validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) &&\n  new Date(value).toISOString() === value;\nconst hasScope = (actor, item) => Array.isArray(actor.groups) && Array.isArray(item?.allowed_groups) &&\n  item.allowed_groups.length > 0 && item.allowed_groups.every(group => actor.groups.includes(group));\nconst sameScope = (a, b) => a && b && a.classification === b.classification &&\n  JSON.stringify(a.allowed_groups) === JSON.stringify(b.allowed_groups);\nconst byId = rows => new Map(rows.map(row => [row.id, row]));\nconst isOpen = review => ['pending', 'clarification_requested'].includes(review.status);\n\nfunction latestBy(rows, key, order) {\n  const latest = new Map();\n  for (const row of rows) {\n    const previous = latest.get(row[key]);\n    if (!previous || previous[order] < row[order]) latest.set(row[key], row);\n  }\n  return [...latest.values()];\n}\nconst observations = state => latestBy(state.observations, 'knowledge_id', 'last_modified_at');\nconst authorities = state => latestBy(state.authority, 'stream', 'version');\nfunction evidenceVersion(version, versions) {\n  let basis = version;\n  let prior = versions.get(basis.supersedes);\n  // Renewing verification keeps the decision attached to the same evidence.\n  while (prior && prior.observation_id === basis.observation_id) {\n    basis = prior;\n    prior = versions.get(basis.supersedes);\n  }\n  return basis.id;\n}\nconst knownClaims = {\n  window_hours: /\\bwithin (\\d{1,4}) hours?\\b/gi,\n  limit_usd: /\\bup to USD (\\d{1,6})\\b/gi,\n  interval_days: /\\bevery (\\d{1,4}) days?\\b/gi\n};\nfunction extractClaim(key, content) {\n  if (!key) return null;\n  const matches = [...content.matchAll(knownClaims[key])];\n  const values = [...new Set(matches.map(match => Number(match[1])))];\n  if (values.length !== 1 || values[0] <= 0) return null;\n  return { key, value: values[0], quote: matches[0][0], offset: matches[0].index };\n}\nfunction citation(item) {\n  return {\n    source_system: item.source_system, source_document_id: item.source_document_id,\n    source_url: item.source_url, title: item.title, revision_id: item.id,\n    content_hash: item.content_hash, last_modified_at: item.last_modified_at,\n    claim: item.claim, provenance: item.provenance\n  };\n}\nfunction evidenceText(item) {\n  if (!item.claim) return item.content;\n  const end = item.content.indexOf('.', item.claim.offset + item.claim.quote.length);\n  const start = item.content.lastIndexOf('.', item.claim.offset);\n  return item.content.slice(start + 1, end < 0 ? undefined : end + 1).trim();\n}\nfunction issuePriority(type, record) {\n  if (record?.classification === 'restricted' || (type === 'conflict' && record?.topic === 'customer-escalation')) return 'high';\n  return 'normal';\n}\nfunction verifiedVersion(item, stream, prior, reviewer, verification, approvedAt) {\n  const version = (prior?.version ?? 0) + 1;\n  return {\n    id: stream + ':v' + version, stream, topic: item.topic, department: item.department,\n    owner: prior?.owner ?? item.owner, version, supersedes: prior?.id ?? null,\n    observation_id: item.id, knowledge_id: item.knowledge_id, title: item.title,\n    classification: item.classification, allowed_groups: item.allowed_groups, approval_status: 'approved',\n    last_verified_at: verification, review_due_at: approvedAt === 'bootstrap' ? item.source_review_due_at : daysAfter(verification, 90),\n    approved_by: reviewer, approved_at: approvedAt === 'bootstrap' ? null : approvedAt,\n    confidence: 'owner_verified', claim: item.claim\n  };\n}\n\nconst abstain = () => reply(200, { status: 'abstained', answer: 'No verified context is available for this request.', citations: [] });\nfunction retrieve(snapshot, request) {\n  if (!snapshot.actor || snapshot.denied) return identityError(snapshot);\n  const question = clean(request?.question);\n  if (question.length < 3 || question.length > 300) return reply(400, { status: 'invalid_question' });\n  const normalized = question.toLowerCase().replace(/[^\\p{L}\\p{N}]+/gu, ' ').trim();\n  const padded = ' ' + normalized + ' ';\n  const state = snapshot.data;\n  const source = byId(state.observations);\n  const latest = new Map(observations(state).map(item => [item.knowledge_id, item]));\n  const quarantined = new Set(state.quarantine.filter(row => row.status === 'open').map(row => row.id));\n  const accessible = version => {\n    const record = source.get(version.observation_id);\n    const head = latest.get(record?.knowledge_id);\n    return hasScope(snapshot.actor, version) && hasScope(snapshot.actor, record) &&\n      head && sameScope(head, record) && !quarantined.has(record.provenance.locator);\n  };\n  const visible = authorities(state).filter(accessible);\n  const topicMatches = new Set(visible.filter(version => snapshot.taxonomy.topics[version.topic][1]\n    .some(alias => padded.includes(' ' + alias + ' '))).map(version => version.topic));\n  if (topicMatches.size !== 1) return abstain();\n  const [topic] = topicMatches;\n  const selected = visible.filter(version => version.topic === topic);\n  const visibleReview = review => review.topic === topic && isOpen(review) && review.evidence_ids.every(id => {\n    const item = source.get(id);\n    return hasScope(snapshot.actor, item) && sameScope(latest.get(item.knowledge_id), item) && !quarantined.has(item.provenance.locator);\n  });\n  const unresolved = state.reviews.filter(visibleReview).map(row => ({ kind: row.kind, status: row.status, priority: row.priority }));\n  const current = selected[0];\n  const record = source.get(current.observation_id);\n  if (new Set(selected.map(version => version.claim?.value ?? source.get(version.observation_id).content_hash)).size > 1) {\n    return reply(200, { status: 'conflict', answer: 'Approved sources disagree. A knowledge owner must reconcile the evidence.',\n      citations: selected.map(version => citation(source.get(version.observation_id))), unresolved_conflicts: unresolved });\n  }\n  if (selected.some(version => version.review_due_at < now)) {\n    return reply(200, { ...abstain().payload, status: 'stale', freshness: 'overdue', unresolved_conflicts: unresolved });\n  }\n  const payload = {\n    status: 'verified', topic, answer: evidenceText(record), authoritative_version: current.version,\n    version_id: current.id, last_verified_at: current.last_verified_at, review_due_at: current.review_due_at,\n    freshness: 'current', confidence: current.confidence, citations: [citation(record)], unresolved_conflicts: unresolved\n  };\n  if (/\\b(change|changed|previous|difference|diff)\\b/.test(normalized)) {\n    const previous = state.authority.find(version => version.id === current.supersedes);\n    if (!previous || !accessible(previous)) return abstain();\n    const previousSource = source.get(previous.observation_id);\n    payload.answer = 'Version ' + previous.version + ': ' + evidenceText(previousSource) + '\\nVersion ' + current.version + ': ' + evidenceText(record);\n    payload.previous_version = previous.version;\n    payload.citations.push(citation(previousSource));\n  } else if (/\\b(last verified|verification date|last reviewed)\\b/.test(normalized)) {\n    payload.answer = 'Last verified on ' + current.last_verified_at.slice(0, 10) + ' (UTC).';\n  } else if (/\\b(who owns|which team owns|who is responsible|owner)\\b/.test(normalized)) {\n    payload.answer = current.department + ' owns this knowledge. Designated owner: ' + current.owner + '.';\n  }\n  return reply(200, payload);\n}\n\nreturn [{ json: retrieve($json, $('Ask a knowledge question').first().json.body) }];"
+      },
+      "id": "764fdb5b-54fa-3a01-d9b6-6a736aeb55f2",
+      "name": "Authorize, match and cite",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        495,
+        165
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {
+          "responseCode": "={{ $json.httpCode }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "id": "f40d6786-a213-71a5-0a0d-de23f179d8bd",
+      "name": "Return trusted context",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        755,
+        165
+      ]
+    }
+  ],
+  "connections": {
+    "Ask a knowledge question": {
+      "main": [
+        [
+          {
+            "node": "Resolve actor and read ledger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve actor and read ledger": {
+      "main": [
+        [
+          {
+            "node": "Authorize, match and cite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authorize, match and cite": {
+      "main": [
+        [
+          {
+            "node": "Return trusted context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "UTC",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "tags": []
+}

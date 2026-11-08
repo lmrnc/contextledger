@@ -1,0 +1,19 @@
+{
+  "browser": "Microsoft Edge",
+  "duration": 90,
+  "endTime": 90,
+  "framesPresented": 1799,
+  "chaptersCrossed": [
+    12,
+    25,
+    45,
+    61,
+    66,
+    71,
+    76,
+    80,
+    86
+  ],
+  "rate": 3,
+  "audioSignalObserved": true
+}

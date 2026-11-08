@@ -1,0 +1,192 @@
+{
+  "id": "CLDetect00000001",
+  "name": "ContextLedger · B / Detect contradiction and drift",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 01 · Compare evidence with approved versions\nTreat recency and source authority as review context. Compare exact values and bind each request to an immutable evidence set.",
+        "width": 650,
+        "height": 330,
+        "color": 5
+      },
+      "id": "4f5fd726-16d1-16e1-1df8-1e7688dd8f26",
+      "name": "01 Compare",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 02 · Open idempotent reviews\nReuse a case for the same evidence. Persist the queue entry and audit event in one transaction.",
+        "width": 420,
+        "height": 330,
+        "color": 4
+      },
+      "id": "684f14be-5e24-6eb5-760b-b086d6bfed44",
+      "name": "02 Queue",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        650,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "613cf6d9-ad3c-a3de-42ff-c2a758c6c67f",
+      "name": "Called by A or E",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        45,
+        165
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.CONTEXTLEDGER_INTERNAL_URL || 'http://127.0.0.1:5679') + '/snapshot' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ledger-Key",
+              "value": "={{ $env.CONTEXTLEDGER_INTERNAL_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ system: true }) }}",
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "a058c707-a4ab-1f7b-2bea-5c0f0f8717aa",
+      "name": "Read current knowledge state",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        245,
+        165
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { createHash, randomUUID } = require('crypto');\nconst sha = value => createHash('sha256').update(value).digest('hex');\nconst now = new Date().toISOString();\nconst daysAfter = (date, days) => new Date(Date.parse(date) + days * 86400000).toISOString();\nconst reply = (httpCode, payload) => ({ httpCode, payload, writes: [] });\nconst identityError = snapshot => snapshot.actor\n  ? reply(403, { status: 'denied' })\n  : reply(401, { status: 'authentication_required' });\nconst put = (collection, row) => ({ collection, row });\nconst audit = (event, actor, fields) => put('audit', { id: randomUUID(), event, actor, at: now, ...fields });\nconst clean = value => typeof value === 'string' ? value.trim() : '';\nconst validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) &&\n  new Date(value).toISOString() === value;\nconst hasScope = (actor, item) => Array.isArray(actor.groups) && Array.isArray(item?.allowed_groups) &&\n  item.allowed_groups.length > 0 && item.allowed_groups.every(group => actor.groups.includes(group));\nconst sameScope = (a, b) => a && b && a.classification === b.classification &&\n  JSON.stringify(a.allowed_groups) === JSON.stringify(b.allowed_groups);\nconst byId = rows => new Map(rows.map(row => [row.id, row]));\nconst isOpen = review => ['pending', 'clarification_requested'].includes(review.status);\n\nfunction latestBy(rows, key, order) {\n  const latest = new Map();\n  for (const row of rows) {\n    const previous = latest.get(row[key]);\n    if (!previous || previous[order] < row[order]) latest.set(row[key], row);\n  }\n  return [...latest.values()];\n}\nconst observations = state => latestBy(state.observations, 'knowledge_id', 'last_modified_at');\nconst authorities = state => latestBy(state.authority, 'stream', 'version');\nfunction evidenceVersion(version, versions) {\n  let basis = version;\n  let prior = versions.get(basis.supersedes);\n  // Renewing verification keeps the decision attached to the same evidence.\n  while (prior && prior.observation_id === basis.observation_id) {\n    basis = prior;\n    prior = versions.get(basis.supersedes);\n  }\n  return basis.id;\n}\nconst knownClaims = {\n  window_hours: /\\bwithin (\\d{1,4}) hours?\\b/gi,\n  limit_usd: /\\bup to USD (\\d{1,6})\\b/gi,\n  interval_days: /\\bevery (\\d{1,4}) days?\\b/gi\n};\nfunction extractClaim(key, content) {\n  if (!key) return null;\n  const matches = [...content.matchAll(knownClaims[key])];\n  const values = [...new Set(matches.map(match => Number(match[1])))];\n  if (values.length !== 1 || values[0] <= 0) return null;\n  return { key, value: values[0], quote: matches[0][0], offset: matches[0].index };\n}\nfunction citation(item) {\n  return {\n    source_system: item.source_system, source_document_id: item.source_document_id,\n    source_url: item.source_url, title: item.title, revision_id: item.id,\n    content_hash: item.content_hash, last_modified_at: item.last_modified_at,\n    claim: item.claim, provenance: item.provenance\n  };\n}\nfunction evidenceText(item) {\n  if (!item.claim) return item.content;\n  const end = item.content.indexOf('.', item.claim.offset + item.claim.quote.length);\n  const start = item.content.lastIndexOf('.', item.claim.offset);\n  return item.content.slice(start + 1, end < 0 ? undefined : end + 1).trim();\n}\nfunction issuePriority(type, record) {\n  if (record?.classification === 'restricted' || (type === 'conflict' && record?.topic === 'customer-escalation')) return 'high';\n  return 'normal';\n}\nfunction verifiedVersion(item, stream, prior, reviewer, verification, approvedAt) {\n  const version = (prior?.version ?? 0) + 1;\n  return {\n    id: stream + ':v' + version, stream, topic: item.topic, department: item.department,\n    owner: prior?.owner ?? item.owner, version, supersedes: prior?.id ?? null,\n    observation_id: item.id, knowledge_id: item.knowledge_id, title: item.title,\n    classification: item.classification, allowed_groups: item.allowed_groups, approval_status: 'approved',\n    last_verified_at: verification, review_due_at: approvedAt === 'bootstrap' ? item.source_review_due_at : daysAfter(verification, 90),\n    approved_by: reviewer, approved_at: approvedAt === 'bootstrap' ? null : approvedAt,\n    confidence: 'owner_verified', claim: item.claim\n  };\n}\n\nfunction detect(snapshot) {\n  const state = snapshot.data;\n  const latest = observations(state);\n  const current = authorities(state);\n  const versions = byId(state.authority);\n  const source = byId(state.observations);\n  const prior = byId(state.reviews);\n  const heads = new Map(latest.map(item => [item.knowledge_id, item]));\n  const writes = [];\n  const findings = [];\n\n  for (const review of state.reviews.filter(isOpen)) {\n    const candidate = source.get(review.candidate_id);\n    const head = heads.get(candidate?.knowledge_id);\n    if (!head || head.id === candidate.id || review.kind === 'revalidation') continue;\n    const status = review.kind === 'metadata_repair' && head.owner ? 'metadata_repaired' : 'superseded';\n    writes.push(put('reviews', { ...review, status, closed_at: now }),\n      audit('review_' + status, snapshot.actor.id, { topic: review.topic, review_id: review.id }));\n  }\n\n  function record(kind, topic, bases, candidate, evidence, explanation, action, owner) {\n    const id = 'review-' + sha(JSON.stringify([kind, topic, bases.map(row => row.id).sort(), candidate?.id, evidence.map(row => row.id).sort()])).slice(0, 28);\n    findings.push({ topic, kind, review_id: id, status: prior.get(id)?.status || 'pending' });\n    if (prior.has(id)) return;\n    const row = {\n      id, kind, topic, base_ids: bases.map(row => row.id), candidate_id: candidate?.id || null,\n      evidence_ids: evidence.map(row => row.id), owner, department: snapshot.taxonomy.topics[topic][0],\n      explanation, proposed_action: action, priority: issuePriority(kind, candidate || evidence[0]),\n      status: 'pending', created_at: now, history: []\n    };\n    writes.push(put('reviews', row), audit('review_opened', snapshot.actor.id, { topic, review_id: id, kind }));\n  }\n\n  for (const [topic, config] of Object.entries(snapshot.taxonomy.topics)) {\n    const bases = current.filter(row => row.topic === topic);\n    const candidates = latest.filter(row => row.topic === topic && row.source_system !== 'contribution');\n    for (const item of candidates.filter(row => !row.owner)) {\n      record('metadata_repair', topic, [], item, [item],\n        'This source revision has no valid designated owner.',\n        'Ask the department champion to set an owner in the source. Publish only after the source is repaired.',\n        snapshot.taxonomy.departments[config[0]]);\n    }\n    const evidence = bases.map(base => source.get(base.observation_id));\n    const distinct = new Set(bases.map(base => base.claim?.value).filter(value => value !== undefined));\n    if (distinct.size > 1) {\n      record('approved_conflict', topic, bases, null, evidence,\n        'Published authority streams disagree. Retrieval must abstain pending a source-policy reconciliation.',\n        'Ask the platform steward to reconcile approved streams.', snapshot.taxonomy.departments[config[0]]);\n      continue;\n    }\n    if (bases.length !== 1) continue;\n    const [base] = bases;\n    const [baseSource] = evidence;\n    const basis = evidenceVersion(base, versions);\n    if (base.review_due_at < now) {\n      record('revalidation', topic, bases, baseSource, evidence,\n        'The latest approved version has passed its review due date.',\n        'Verify the original source and renew its verification date.', base.owner);\n    }\n    for (const candidate of candidates) {\n      if (candidate.id === baseSource.id) continue;\n      const sameSource = candidate.knowledge_id === base.knowledge_id;\n      const sameClaim = candidate.claim?.value === base.claim?.value;\n      const disposed = state.reviews.some(review => review.topic === topic &&\n        review.status === 'approved' && review.resulting_version === basis &&\n        review.evidence_ids.includes(candidate.id));\n      if (disposed) continue;\n      const peers = candidates.filter(row => row.id !== candidate.id && row.id !== baseSource.id &&\n        sameScope(row, base) && row.claim && row.claim.value === base.claim?.value);\n      if (candidate.claim && base.claim && !sameClaim) {\n        const ranks = snapshot.taxonomy.sourceAuthority;\n        const dateOrder = candidate.last_modified_at === baseSource.last_modified_at ? 'the same edit time as'\n          : candidate.last_modified_at > baseSource.last_modified_at ? 'a later edit time than' : 'an earlier edit time than';\n        const context = 'The unapproved source has ' + dateOrder + ' the approved source (authority rank ' +\n          ranks[candidate.source_system] + ' vs. ' + ranks[baseSource.source_system] + ').';\n        const scope = sameScope(base, candidate) ? '' : ' The access scopes differ. Route any scope change through Security.';\n        record('conflict', topic, bases, candidate, [...evidence, candidate, ...peers],\n          'The extracted values disagree. ' + context + scope,\n          'Approve the replacement, reject it, or request clarification. No automatic publication is permitted.', base.owner);\n      } else if (sameSource) {\n        record('source_changed', topic, bases, candidate, [...evidence, candidate],\n          'The source changed after its last approval. Changes may affect the claim, text, metadata or access.',\n          'Review the new revision and confirm it is safe to publish.', base.owner);\n      } else if (config[2] && !candidate.claim) {\n        record('uncertain_claim', topic, bases, candidate, [...evidence, candidate],\n          'The topic expects a single supported claim, but the source yielded no unambiguous value.',\n          'Request clearer source text or reject this candidate.', base.owner);\n      }\n    }\n  }\n  return { ...reply(200, { status: 'scanned', findings,\n    opened: writes.filter(write => write.collection === 'reviews' && write.row.status === 'pending').length }), writes };\n}\n\nreturn [{ json: detect($json) }];"
+      },
+      "id": "fc70d467-af16-485f-5aa0-828275bd981d",
+      "name": "Compare claims and propose reviews",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        455,
+        165
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.CONTEXTLEDGER_INTERNAL_URL || 'http://127.0.0.1:5679') + '/commit' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ledger-Key",
+              "value": "={{ $env.CONTEXTLEDGER_INTERNAL_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ revision: $('Read current knowledge state').first().json.revision, writes: $('Compare claims and propose reviews').first().json.writes }) }}",
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "79834bdd-0f53-be78-257f-3b3e70adb08f",
+      "name": "Commit reviews and audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        165
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $json.committed ? $('Compare claims and propose reviews').first().json : { httpCode: 409, payload: { status: 'state_changed', message: 'Refresh and retry.' } } }];"
+      },
+      "id": "25c515d7-f72d-14e5-ec79-54ca3025b8f8",
+      "name": "Return scan results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        165
+      ]
+    }
+  ],
+  "connections": {
+    "Called by A or E": {
+      "main": [
+        [
+          {
+            "node": "Read current knowledge state",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read current knowledge state": {
+      "main": [
+        [
+          {
+            "node": "Compare claims and propose reviews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare claims and propose reviews": {
+      "main": [
+        [
+          {
+            "node": "Commit reviews and audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit reviews and audit": {
+      "main": [
+        [
+          {
+            "node": "Return scan results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "UTC",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "tags": []
+}

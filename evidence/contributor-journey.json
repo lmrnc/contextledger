@@ -1,0 +1,51 @@
+{
+  "submitted": {
+    "status": "pending",
+    "review_id": "review-efaf65983b79a6619962247cf885",
+    "topic": "weekend-coverage"
+  },
+  "pending": {
+    "status": "abstained",
+    "answer": "No verified context is available for this request.",
+    "citations": []
+  },
+  "approved": {
+    "status": "approved",
+    "review_id": "review-efaf65983b79a6619962247cf885",
+    "reviewer": "knowledge-admin",
+    "decided_at": "2026-11-08T18:13:12.735Z",
+    "authoritative_version": 1,
+    "resulting_version": "weekend-coverage:k-3bfa11095eb00bb16a31f7cb3bae551af8931319c90c6d03284da0389b4735d1:v1"
+  },
+  "verified": {
+    "status": "verified",
+    "topic": "weekend-coverage",
+    "answer": "The Support duty lead checks urgent cases at 09:00 and 16:00 UTC on weekends.",
+    "authoritative_version": 1,
+    "version_id": "weekend-coverage:k-3bfa11095eb00bb16a31f7cb3bae551af8931319c90c6d03284da0389b4735d1:v1",
+    "last_verified_at": "2026-11-08T18:13:12.735Z",
+    "review_due_at": "2027-02-06T18:13:12.735Z",
+    "freshness": "current",
+    "confidence": "owner_verified",
+    "citations": [
+      {
+        "source_system": "contribution",
+        "source_document_id": "weekend-coverage",
+        "source_url": "https://northstar.example/contribution/rev-efaf65983b79a6619962247cf885b8e6f2a8658817061f743b020a22b438e5c6",
+        "title": "Weekend coverage procedure",
+        "revision_id": "rev-efaf65983b79a6619962247cf885b8e6f2a8658817061f743b020a22b438e5c6",
+        "content_hash": "6d5cb982500850a2a3ccf3ea5d7b994cd80b07559bf6caab4aa4219c5112b82c",
+        "last_modified_at": "2026-11-08T18:13:11.954Z",
+        "claim": null,
+        "provenance": {
+          "adapter": "review-desk/v1",
+          "locator": "contribution:weekend-coverage",
+          "submitted_by": "support-owner",
+          "submitted_at": "2026-11-08T18:13:11.954Z",
+          "review_id": "review-efaf65983b79a6619962247cf885"
+        }
+      }
+    ],
+    "unresolved_conflicts": []
+  }
+}

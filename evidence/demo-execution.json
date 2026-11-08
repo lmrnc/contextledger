@@ -1,0 +1,471 @@
+{
+  "seed": {
+    "status": "ingested",
+    "sources": {
+      "slack": {
+        "status": "ok",
+        "inserted": 0,
+        "unchanged": 8,
+        "quarantined": 0,
+        "obsolete": 0,
+        "baseline_imported": 0
+      },
+      "notion": {
+        "status": "ok",
+        "inserted": 0,
+        "unchanged": 17,
+        "quarantined": 0,
+        "obsolete": 0,
+        "baseline_imported": 0
+      },
+      "operations": {
+        "status": "ok",
+        "inserted": 0,
+        "unchanged": 12,
+        "quarantined": 0,
+        "obsolete": 0,
+        "baseline_imported": 0
+      }
+    },
+    "scan": {
+      "status": "scanned",
+      "findings": [
+        {
+          "topic": "customer-escalation",
+          "kind": "conflict",
+          "review_id": "review-490b6d971a279cae51771d2572e3",
+          "status": "pending"
+        },
+        {
+          "topic": "refund-approval",
+          "kind": "conflict",
+          "review_id": "review-af90b34164ec42614a23947c2ce2",
+          "status": "pending"
+        },
+        {
+          "topic": "key-rotation",
+          "kind": "conflict",
+          "review_id": "review-95ac5afa4ee101ed71b723c41a98",
+          "status": "pending"
+        },
+        {
+          "topic": "access-review",
+          "kind": "revalidation",
+          "review_id": "review-1da0b623b0c4d55497cf0b18c9b6",
+          "status": "pending"
+        },
+        {
+          "topic": "legacy-export",
+          "kind": "metadata_repair",
+          "review_id": "review-c7d6fac1f2b8e309839ac8ef05eb",
+          "status": "pending"
+        }
+      ],
+      "opened": 0
+    }
+  },
+  "baseline": {
+    "status": "verified",
+    "topic": "customer-escalation",
+    "answer": "Escalate qualifying P2 customer cases within 24 hours of confirmation.",
+    "authoritative_version": 1,
+    "version_id": "customer-escalation:k-cd911d536370fa38ed581a3e0f26af520a3c654129456e7b6cdcc4b2899abce2:v1",
+    "last_verified_at": "2026-11-01T18:12:42.709Z",
+    "review_due_at": "2027-01-30T18:12:42.709Z",
+    "freshness": "current",
+    "confidence": "owner_verified",
+    "citations": [
+      {
+        "source_system": "notion",
+        "source_document_id": "support-escalation",
+        "source_url": "https://northstar.example/notion/support-escalation",
+        "title": "Customer escalation policy",
+        "revision_id": "rev-99c64988317aa72d70316a654e3cbe245b7932a564d2b04468f67a21b68de738",
+        "content_hash": "c5983c332210b4ce32e33d2df26ff3526af28d7f31653f4323ddfd00e28750fa",
+        "last_modified_at": "2026-10-25T18:12:42.709Z",
+        "claim": {
+          "key": "window_hours",
+          "value": 24,
+          "quote": "within 24 hours",
+          "offset": 38
+        },
+        "provenance": {
+          "adapter": "notion/v1",
+          "locator": "notion:support-escalation",
+          "fetched_at": "2026-11-08T18:13:04.210Z"
+        }
+      }
+    ],
+    "unresolved_conflicts": [
+      {
+        "kind": "conflict",
+        "status": "pending",
+        "priority": "high"
+      }
+    ]
+  },
+  "review": {
+    "id": "review-490b6d971a279cae51771d2572e3",
+    "kind": "conflict",
+    "topic": "customer-escalation",
+    "base_ids": [
+      "customer-escalation:k-cd911d536370fa38ed581a3e0f26af520a3c654129456e7b6cdcc4b2899abce2:v1"
+    ],
+    "candidate_id": "rev-86175d54fe72c4fe0111cea80feb24cd1316e79cbf2e3d385cae24e3705cd538",
+    "evidence_ids": [
+      "rev-99c64988317aa72d70316a654e3cbe245b7932a564d2b04468f67a21b68de738",
+      "rev-86175d54fe72c4fe0111cea80feb24cd1316e79cbf2e3d385cae24e3705cd538",
+      "rev-7d7754ae761dbfcc991100a384909634f68ec4d93edce7f045b945ff748092ea"
+    ],
+    "owner": "support-owner",
+    "department": "Support",
+    "explanation": "The extracted values disagree. The unapproved source has a later edit time than the approved source (authority rank 1 vs. 3).",
+    "proposed_action": "Approve the replacement, reject it, or request clarification. No automatic publication is permitted.",
+    "priority": "high",
+    "status": "pending",
+    "created_at": "2026-11-08T18:13:04.301Z",
+    "history": [],
+    "can_decide": true,
+    "current": [
+      {
+        "version": 1,
+        "verification": "2026-11-01T18:12:42.709Z",
+        "claim": {
+          "key": "window_hours",
+          "value": 24,
+          "quote": "within 24 hours",
+          "offset": 38
+        },
+        "content": "Escalate qualifying P2 customer cases within 24 hours of confirmation. Route them to the Support duty lead."
+      }
+    ],
+    "proposed": "Escalate qualifying P2 customer cases within 48 hours of confirmation. Route them to the Support duty lead. The change awaits policy-owner sign-off.",
+    "evidence": [
+      {
+        "source_system": "notion",
+        "source_document_id": "support-escalation",
+        "source_url": "https://northstar.example/notion/support-escalation",
+        "title": "Customer escalation policy",
+        "revision_id": "rev-99c64988317aa72d70316a654e3cbe245b7932a564d2b04468f67a21b68de738",
+        "content_hash": "c5983c332210b4ce32e33d2df26ff3526af28d7f31653f4323ddfd00e28750fa",
+        "last_modified_at": "2026-10-25T18:12:42.709Z",
+        "claim": {
+          "key": "window_hours",
+          "value": 24,
+          "quote": "within 24 hours",
+          "offset": 38
+        },
+        "provenance": {
+          "adapter": "notion/v1",
+          "locator": "notion:support-escalation",
+          "fetched_at": "2026-11-08T18:13:04.210Z"
+        },
+        "classification": "internal",
+        "authority_rank": 3,
+        "approval_status": "approved baseline",
+        "excerpt": "Escalate qualifying P2 customer cases within 24 hours of confirmation. Route them to the Support duty lead."
+      },
+      {
+        "source_system": "slack",
+        "source_document_id": "support-decision",
+        "source_url": "https://northstar.example/slack/support-decision",
+        "title": "Support leadership decision on escalation",
+        "revision_id": "rev-86175d54fe72c4fe0111cea80feb24cd1316e79cbf2e3d385cae24e3705cd538",
+        "content_hash": "8947dbee9091a63fc9a0f995a6d68e50c6fdfed6cda126a042866e4c98ba9fdd",
+        "last_modified_at": "2026-11-06T18:12:42.709Z",
+        "claim": {
+          "key": "window_hours",
+          "value": 48,
+          "quote": "within 48 hours",
+          "offset": 38
+        },
+        "provenance": {
+          "adapter": "slack/v1",
+          "locator": "slack:support-decision",
+          "fetched_at": "2026-11-08T18:13:04.210Z"
+        },
+        "classification": "internal",
+        "authority_rank": 1,
+        "approval_status": "source observation",
+        "excerpt": "Escalate qualifying P2 customer cases within 48 hours of confirmation. Route them to the Support duty lead. The change awaits policy-owner sign-off."
+      },
+      {
+        "source_system": "operations",
+        "source_document_id": "support-playbook",
+        "source_url": "https://northstar.example/operations/support-playbook",
+        "title": "P2 dispatch checklist",
+        "revision_id": "rev-7d7754ae761dbfcc991100a384909634f68ec4d93edce7f045b945ff748092ea",
+        "content_hash": "080b3dee793c56a4c716c35f1334476be054fc856cea89721337c58cd73c316a",
+        "last_modified_at": "2026-11-03T18:12:42.709Z",
+        "claim": {
+          "key": "window_hours",
+          "value": 24,
+          "quote": "within 24 hours",
+          "offset": 38
+        },
+        "provenance": {
+          "adapter": "operations/v1",
+          "locator": "operations:support-playbook",
+          "fetched_at": "2026-11-08T18:13:04.210Z"
+        },
+        "classification": "internal",
+        "authority_rank": 2,
+        "approval_status": "source observation",
+        "excerpt": "Escalate qualifying P2 customer cases within 24 hours of confirmation. Page the Support duty lead using the on-call roster."
+      }
+    ]
+  },
+  "unauthorized": {
+    "status": "denied"
+  },
+  "approved": {
+    "status": "approved",
+    "review_id": "review-490b6d971a279cae51771d2572e3",
+    "reviewer": "support-owner",
+    "decided_at": "2026-11-08T18:13:06.894Z",
+    "authoritative_version": 2,
+    "resulting_version": "customer-escalation:k-cd911d536370fa38ed581a3e0f26af520a3c654129456e7b6cdcc4b2899abce2:v2"
+  },
+  "trusted": {
+    "status": "verified",
+    "topic": "customer-escalation",
+    "answer": "Escalate qualifying P2 customer cases within 48 hours of confirmation.",
+    "authoritative_version": 2,
+    "version_id": "customer-escalation:k-cd911d536370fa38ed581a3e0f26af520a3c654129456e7b6cdcc4b2899abce2:v2",
+    "last_verified_at": "2026-11-08T18:13:06.894Z",
+    "review_due_at": "2027-02-06T18:13:06.894Z",
+    "freshness": "current",
+    "confidence": "owner_verified",
+    "citations": [
+      {
+        "source_system": "slack",
+        "source_document_id": "support-decision",
+        "source_url": "https://northstar.example/slack/support-decision",
+        "title": "Support leadership decision on escalation",
+        "revision_id": "rev-86175d54fe72c4fe0111cea80feb24cd1316e79cbf2e3d385cae24e3705cd538",
+        "content_hash": "8947dbee9091a63fc9a0f995a6d68e50c6fdfed6cda126a042866e4c98ba9fdd",
+        "last_modified_at": "2026-11-06T18:12:42.709Z",
+        "claim": {
+          "key": "window_hours",
+          "value": 48,
+          "quote": "within 48 hours",
+          "offset": 38
+        },
+        "provenance": {
+          "adapter": "slack/v1",
+          "locator": "slack:support-decision",
+          "fetched_at": "2026-11-08T18:13:04.210Z"
+        }
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "denied": {
+    "status": "abstained",
+    "answer": "No verified context is available for this request.",
+    "citations": []
+  },
+  "report": {
+    "status": "reported",
+    "id": "2026-11-08",
+    "generated_at": "2026-11-08T18:13:07.201Z",
+    "grouped": [
+      {
+        "owner": "engineering-owner",
+        "issues": [
+          {
+            "department": "Engineering",
+            "kind": "metadata_repair",
+            "subject": "legacy-export",
+            "action": "Open the review desk, compare evidence and record an action."
+          }
+        ]
+      },
+      {
+        "owner": "knowledge-admin",
+        "issues": [
+          {
+            "department": "Engineering",
+            "kind": "missing_owner",
+            "subject": "Legacy warehouse export",
+            "action": "Ask the department champion to add the designated owner in the source."
+          }
+        ]
+      },
+      {
+        "owner": "security-owner",
+        "issues": [
+          {
+            "department": "Security",
+            "kind": "conflict",
+            "subject": "key-rotation",
+            "action": "Open the review desk, compare evidence and record an action."
+          },
+          {
+            "department": "Security",
+            "kind": "overdue",
+            "subject": "Quarterly access review",
+            "action": "Review the original source in the review desk."
+          },
+          {
+            "department": "Security",
+            "kind": "revalidation",
+            "subject": "access-review",
+            "action": "Open the review desk, compare evidence and record an action."
+          }
+        ]
+      },
+      {
+        "owner": "support-owner",
+        "issues": [
+          {
+            "department": "Support",
+            "kind": "conflict",
+            "subject": "refund-approval",
+            "action": "Open the review desk, compare evidence and record an action."
+          },
+          {
+            "department": "Support",
+            "kind": "duplicate",
+            "subject": "notion:handoff-policy and operations:handoff-copy",
+            "action": "Keep a link to the approved source and retire redundant copies after checking their consumers."
+          },
+          {
+            "department": "Support",
+            "kind": "source_alignment",
+            "subject": "notion:support-escalation",
+            "action": "Update the old source or replace it with a link to the authoritative policy."
+          },
+          {
+            "department": "Support",
+            "kind": "source_alignment",
+            "subject": "operations:support-playbook",
+            "action": "Update the old source or replace it with a link to the authoritative policy."
+          }
+        ]
+      }
+    ],
+    "resolved_reviews": [
+      {
+        "topic": "customer-escalation",
+        "status": "approved",
+        "kind": "conflict",
+        "review_id": "review-490b6d971a279cae51771d2572e3",
+        "resulting_version": 2
+      }
+    ],
+    "counts": {
+      "latest_records": 37,
+      "complete_records": 36,
+      "owned_records": 36,
+      "quarantined_records": 0,
+      "authoritative_topics": 25,
+      "authority_versions": 26,
+      "current_streams": 25,
+      "current_fresh_streams": 24,
+      "duplicate_groups": 1,
+      "duplicate_surplus_records": 1,
+      "open_reviews": 4,
+      "audit_events": 35
+    },
+    "audit_tail": [
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:13:04.210Z",
+        "topic": "inbox-triage"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:13:04.210Z",
+        "topic": "rollback"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:13:04.210Z",
+        "topic": "observability"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:13:04.210Z",
+        "topic": "beta"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:13:04.210Z",
+        "topic": "security-runbook"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:13:04.210Z",
+        "topic": "device-enrolment"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:13:04.210Z",
+        "topic": "expense"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:13:04.210Z",
+        "topic": "offboarding"
+      },
+      {
+        "event": "review_opened",
+        "actor": "ledger-scheduler",
+        "at": "2026-11-08T18:13:04.301Z",
+        "topic": "customer-escalation",
+        "review_id": "review-490b6d971a279cae51771d2572e3"
+      },
+      {
+        "event": "review_opened",
+        "actor": "ledger-scheduler",
+        "at": "2026-11-08T18:13:04.301Z",
+        "topic": "refund-approval",
+        "review_id": "review-af90b34164ec42614a23947c2ce2"
+      },
+      {
+        "event": "review_opened",
+        "actor": "ledger-scheduler",
+        "at": "2026-11-08T18:13:04.301Z",
+        "topic": "key-rotation",
+        "review_id": "review-95ac5afa4ee101ed71b723c41a98"
+      },
+      {
+        "event": "review_opened",
+        "actor": "ledger-scheduler",
+        "at": "2026-11-08T18:13:04.301Z",
+        "topic": "access-review",
+        "review_id": "review-1da0b623b0c4d55497cf0b18c9b6"
+      },
+      {
+        "event": "review_opened",
+        "actor": "ledger-scheduler",
+        "at": "2026-11-08T18:13:04.301Z",
+        "topic": "legacy-export",
+        "review_id": "review-c7d6fac1f2b8e309839ac8ef05eb"
+      },
+      {
+        "event": "decision_denied",
+        "actor": "general-employee",
+        "at": "2026-11-08T18:13:06.819Z"
+      },
+      {
+        "event": "decision_approve",
+        "actor": "support-owner",
+        "at": "2026-11-08T18:13:06.894Z",
+        "topic": "customer-escalation",
+        "review_id": "review-490b6d971a279cae51771d2572e3",
+        "resulting_version": "customer-escalation:k-cd911d536370fa38ed581a3e0f26af520a3c654129456e7b6cdcc4b2899abce2:v2"
+      }
+    ],
+    "new_mock_notifications": 4
+  }
+}

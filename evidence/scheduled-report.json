@@ -1,0 +1,200 @@
+{
+  "test_cron": "*/10 * * * * *",
+  "default_cron": "0 9 * * *",
+  "timezone": "UTC",
+  "monitor_webhook_calls": 0,
+  "report": {
+    "id": "2026-11-08",
+    "generated_at": "2026-11-08T18:12:40.234Z",
+    "grouped": [
+      {
+        "owner": "engineering-owner",
+        "issues": [
+          {
+            "department": "Engineering",
+            "kind": "metadata_repair",
+            "subject": "legacy-export",
+            "action": "Open the review desk, compare evidence and record an action."
+          }
+        ]
+      },
+      {
+        "owner": "knowledge-admin",
+        "issues": [
+          {
+            "department": "Engineering",
+            "kind": "missing_owner",
+            "subject": "Legacy warehouse export",
+            "action": "Ask the department champion to add the designated owner in the source."
+          }
+        ]
+      },
+      {
+        "owner": "security-owner",
+        "issues": [
+          {
+            "department": "Security",
+            "kind": "conflict",
+            "subject": "key-rotation",
+            "action": "Open the review desk, compare evidence and record an action."
+          },
+          {
+            "department": "Security",
+            "kind": "overdue",
+            "subject": "Quarterly access review",
+            "action": "Review the original source in the review desk."
+          },
+          {
+            "department": "Security",
+            "kind": "revalidation",
+            "subject": "access-review",
+            "action": "Open the review desk, compare evidence and record an action."
+          }
+        ]
+      },
+      {
+        "owner": "support-owner",
+        "issues": [
+          {
+            "department": "Support",
+            "kind": "conflict",
+            "subject": "customer-escalation",
+            "action": "Open the review desk, compare evidence and record an action."
+          },
+          {
+            "department": "Support",
+            "kind": "conflict",
+            "subject": "refund-approval",
+            "action": "Open the review desk, compare evidence and record an action."
+          },
+          {
+            "department": "Support",
+            "kind": "duplicate",
+            "subject": "notion:handoff-policy and operations:handoff-copy",
+            "action": "Keep a link to the approved source and retire redundant copies after checking their consumers."
+          }
+        ]
+      }
+    ],
+    "resolved_reviews": [],
+    "counts": {
+      "latest_records": 37,
+      "complete_records": 36,
+      "owned_records": 36,
+      "quarantined_records": 0,
+      "authoritative_topics": 25,
+      "authority_versions": 25,
+      "current_streams": 25,
+      "current_fresh_streams": 24,
+      "duplicate_groups": 1,
+      "duplicate_surplus_records": 1,
+      "open_reviews": 5,
+      "audit_events": 33
+    },
+    "audit_tail": [
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:12:32.200Z",
+        "topic": "learning"
+      },
+      {
+        "event": "feed_ok",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:12:32.200Z"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:12:32.200Z",
+        "topic": "inbox-triage"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:12:32.200Z",
+        "topic": "rollback"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:12:32.200Z",
+        "topic": "observability"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:12:32.200Z",
+        "topic": "beta"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:12:32.200Z",
+        "topic": "security-runbook"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:12:32.200Z",
+        "topic": "device-enrolment"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:12:32.200Z",
+        "topic": "expense"
+      },
+      {
+        "event": "baseline_imported",
+        "actor": "knowledge-admin",
+        "at": "2026-11-08T18:12:32.200Z",
+        "topic": "offboarding"
+      },
+      {
+        "event": "review_opened",
+        "actor": "ledger-scheduler",
+        "at": "2026-11-08T18:12:32.290Z",
+        "topic": "customer-escalation",
+        "review_id": "review-ee4f4af726a6666161289646ce2c"
+      },
+      {
+        "event": "review_opened",
+        "actor": "ledger-scheduler",
+        "at": "2026-11-08T18:12:32.290Z",
+        "topic": "refund-approval",
+        "review_id": "review-254eeed5690be4d6442dd6a4bb16"
+      },
+      {
+        "event": "review_opened",
+        "actor": "ledger-scheduler",
+        "at": "2026-11-08T18:12:32.290Z",
+        "topic": "key-rotation",
+        "review_id": "review-e4a2694aceb6ff3362fb4d544de7"
+      },
+      {
+        "event": "review_opened",
+        "actor": "ledger-scheduler",
+        "at": "2026-11-08T18:12:32.290Z",
+        "topic": "access-review",
+        "review_id": "review-d4f871ae259f9c94039bad3e4934"
+      },
+      {
+        "event": "review_opened",
+        "actor": "ledger-scheduler",
+        "at": "2026-11-08T18:12:32.290Z",
+        "topic": "legacy-export",
+        "review_id": "review-84316c89d23064775fe6a135125c"
+      }
+    ]
+  },
+  "sample_mock_notification": {
+    "id": "notice-c83d2b7cf77db84949317cf084c8ed4ab41cbfe66266a0940999b8c7b4659f7f",
+    "channel": "mock-slack",
+    "recipient": "security-owner",
+    "issue_count": 3,
+    "report_date": "2026-11-08",
+    "created_at": "2026-11-08T18:12:40.234Z",
+    "status": "queued_mock"
+  }
+}

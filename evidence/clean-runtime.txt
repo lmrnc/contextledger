@@ -1,0 +1,6 @@
+Node.js v24.14.0
+Platform win32 x64
+n8n 2.46.6
+MCP SDK 1.29.0
+Zod 3.25.76
+SQLite native library 3.44.2

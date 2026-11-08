@@ -1,0 +1,52 @@
+{
+  "departments": {
+    "Support": "support-owner",
+    "Product": "product-owner",
+    "Engineering": "engineering-owner",
+    "Security": "security-owner",
+    "People Operations": "people-owner"
+  },
+  "departmentGroups": {
+    "Support": "support",
+    "Product": "product",
+    "Engineering": "engineering",
+    "Security": "security",
+    "People Operations": "people"
+  },
+  "types": ["policy", "procedure", "decision", "runbook", "reference"],
+  "classifications": {
+    "internal": ["employees"],
+    "restricted": ["support", "product", "engineering", "security", "people"]
+  },
+  "sourceAuthority": { "notion": 3, "operations": 2, "slack": 1, "contribution": 0 },
+  "topics": {
+    "customer-escalation": ["Support", ["escalation policy", "customer escalation", "escalation window", "escalation deadline", "escalation process"], "window_hours"],
+    "refund-approval": ["Support", ["refund approval", "refund threshold"], "limit_usd"],
+    "handoff": ["Support", ["weekend handoff", "support handoff"], null],
+    "status-updates": ["Support", ["status updates", "customer updates"], null],
+    "inbox-triage": ["Support", ["inbox triage", "queue triage"], null],
+    "weekend-coverage": ["Support", ["weekend coverage", "weekend coverage procedure"], null],
+    "incident-response": ["Engineering", ["incident response", "incident commander", "incident process"], null],
+    "rollback": ["Engineering", ["rollback procedure", "deployment rollback"], null],
+    "release-freeze": ["Engineering", ["release freeze", "deployment freeze"], null],
+    "observability": ["Engineering", ["observability onboarding", "service dashboards"], null],
+    "api-deprecation": ["Engineering", ["api deprecation", "deprecation notice"], null],
+    "roadmap": ["Product", ["roadmap intake", "product requests"], null],
+    "research": ["Product", ["research consent", "user research"], null],
+    "beta": ["Product", ["beta access", "beta enrollment"], null],
+    "release-notes": ["Product", ["release notes", "changelog review"], null],
+    "pricing": ["Product", ["pricing change", "pricing review"], null],
+    "security-runbook": ["Security", ["security runbook", "security incident containment", "quartz vault"], null],
+    "key-rotation": ["Security", ["key rotation", "credential rotation"], "interval_days"],
+    "vendor-review": ["Security", ["vendor review", "supplier security"], null],
+    "device-enrolment": ["Security", ["device enrolment", "device enrollment"], null],
+    "access-review": ["Security", ["access review", "entitlement review"], null],
+    "onboarding": ["People Operations", ["employee onboarding", "new hire"], null],
+    "leave": ["People Operations", ["leave policy", "time off"], null],
+    "expense": ["People Operations", ["expense policy", "expense reimbursement"], null],
+    "learning": ["People Operations", ["learning budget", "training budget"], null],
+    "offboarding": ["People Operations", ["employee offboarding", "departure checklist"], null],
+    "legacy-export": ["Engineering", ["legacy export", "warehouse export"], null],
+    "pilot-feedback": ["Product", ["pilot feedback", "feedback pilot"], null]
+  }
+}

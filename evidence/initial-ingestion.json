@@ -1,0 +1,65 @@
+{
+  "status": "ingested",
+  "sources": {
+    "slack": {
+      "status": "ok",
+      "inserted": 8,
+      "unchanged": 0,
+      "quarantined": 0,
+      "obsolete": 0,
+      "baseline_imported": 0
+    },
+    "notion": {
+      "status": "ok",
+      "inserted": 17,
+      "unchanged": 0,
+      "quarantined": 0,
+      "obsolete": 0,
+      "baseline_imported": 17
+    },
+    "operations": {
+      "status": "ok",
+      "inserted": 12,
+      "unchanged": 0,
+      "quarantined": 0,
+      "obsolete": 0,
+      "baseline_imported": 8
+    }
+  },
+  "scan": {
+    "status": "scanned",
+    "findings": [
+      {
+        "topic": "customer-escalation",
+        "kind": "conflict",
+        "review_id": "review-490b6d971a279cae51771d2572e3",
+        "status": "pending"
+      },
+      {
+        "topic": "refund-approval",
+        "kind": "conflict",
+        "review_id": "review-af90b34164ec42614a23947c2ce2",
+        "status": "pending"
+      },
+      {
+        "topic": "key-rotation",
+        "kind": "conflict",
+        "review_id": "review-95ac5afa4ee101ed71b723c41a98",
+        "status": "pending"
+      },
+      {
+        "topic": "access-review",
+        "kind": "revalidation",
+        "review_id": "review-1da0b623b0c4d55497cf0b18c9b6",
+        "status": "pending"
+      },
+      {
+        "topic": "legacy-export",
+        "kind": "metadata_repair",
+        "review_id": "review-c7d6fac1f2b8e309839ac8ef05eb",
+        "status": "pending"
+      }
+    ],
+    "opened": 5
+  }
+}

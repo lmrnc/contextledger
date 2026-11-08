@@ -1,0 +1,86 @@
+1
+00:00:00,000 --> 00:00:03,000
+AI agents can retrieve company knowledge.
+
+2
+00:00:03,000 --> 00:00:06,000
+But how do they know
+which version to trust?
+
+3
+00:00:06,000 --> 00:00:12,000
+The approved policy says 24 hours.
+Slack says 48. The checklist still says 24.
+
+4
+00:00:12,000 --> 00:00:17,000
+n8n ingests three synthetic feeds
+and validates their metadata.
+
+5
+00:00:17,000 --> 00:00:21,000
+The ledger tracks the evidence
+and who owns the policy.
+
+6
+00:00:21,000 --> 00:00:25,000
+Approval controls what gets published.
+
+7
+00:00:25,000 --> 00:00:31,500
+In the Review Desk, Support compares
+the approved policy with the Slack decision.
+
+8
+00:00:31,500 --> 00:00:37,800
+The newer decision opens a review.
+The 24-hour policy stays in force.
+
+9
+00:00:37,800 --> 00:00:45,000
+The owner approves 48 hours.
+Version two preserves the decision trail.
+
+10
+00:00:45,000 --> 00:00:50,800
+A department owner can propose
+a procedure in the same desk.
+
+11
+00:00:50,800 --> 00:00:56,500
+The form applies the taxonomy
+and records the intended audience.
+
+12
+00:00:56,500 --> 00:01:01,000
+The submission waits for a separate steward.
+
+13
+00:01:01,000 --> 00:01:06,000
+Before approval, the employee gets
+no verified answer.
+
+14
+00:01:06,000 --> 00:01:11,000
+The steward approves the submission
+and publishes version one.
+
+15
+00:01:11,000 --> 00:01:16,000
+The same question returns a cited version.
+HTTP and MCP share this policy.
+
+16
+00:01:16,000 --> 00:01:20,000
+The employee gets no restricted
+Security content or citations.
+
+17
+00:01:20,000 --> 00:01:26,000
+The quality report assigns old copies
+and overdue reviews to owners.
+
+18
+00:01:26,000 --> 00:01:30,000
+ContextLedger. Reliable context,
+governed by people, accessible to AI.

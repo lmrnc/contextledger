@@ -1,0 +1,7 @@
+node_modules/
+.capture/
+out/
+public/narration.*
+voice-props.json
+ContextLedger_Demo_Voiced.mp4
+ContextLedger_Demo_90s.mp4

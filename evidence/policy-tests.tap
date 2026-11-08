@@ -1,0 +1,36 @@
+TAP version 13
+# (node:17728) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: retrieval Code node abstains when two visible approved streams disagree
+ok 1 - retrieval Code node abstains when two visible approved streams disagree
+  ---
+  duration_ms: 7.0652
+  type: 'test'
+  ...
+# Subtest: a hidden approved stream cannot change a less privileged response
+ok 2 - a hidden approved stream cannot change a less privileged response
+  ---
+  duration_ms: 0.7138
+  type: 'test'
+  ...
+# Subtest: renewing an unchanged evidence revision preserves the resolved conflict and its source cleanup
+ok 3 - renewing an unchanged evidence revision preserves the resolved conflict and its source cleanup
+  ---
+  duration_ms: 5.0111
+  type: 'test'
+  ...
+# Subtest: SQLite rolls back an entire batch on an immutable history violation
+ok 4 - SQLite rolls back an entire batch on an immutable history violation
+  ---
+  duration_ms: 1.7456
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 103.6403

@@ -1,0 +1,29 @@
+{
+  "durationSeconds": 90,
+  "frames": 2700,
+  "resolution": [
+    1920,
+    1080
+  ],
+  "videoCodec": "h264",
+  "pixelFormat": "yuvj420p",
+  "fps": "30/1",
+  "videoStreamSha256": "0a630d361108ab5fbba2ba84fb128cace2f2e6f7e8f7bd82c670bc2a6610733b",
+  "decodedWithoutErrors": true,
+  "audioCodec": "aac",
+  "audioDurationSeconds": 90,
+  "narration": {
+    "cuesWithSpeech": 18,
+    "cueStartsQuiet": true,
+    "sourceWaveformCorrelation": 0.999972,
+    "integratedLufs": -16.33,
+    "truePeakDbtp": -1.41
+  },
+  "captions": {
+    "count": 18,
+    "firstMs": 0,
+    "lastMs": 90000,
+    "sourceMatchesSrt": true
+  },
+  "captureChecksPassed": true
+}

@@ -1,0 +1,17 @@
+{
+  "name": "contextledger",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.0.0 <25" },
+  "scripts": {
+    "build": "node scripts/build-workflows.mjs",
+    "start": "node scripts/run.mjs start",
+    "stop": "node scripts/run.mjs stop",
+    "reset": "node scripts/run.mjs reset",
+    "tokens": "node scripts/run.mjs tokens",
+    "seed": "node scripts/demo.mjs seed",
+    "demo": "node scripts/demo.mjs",
+    "test": "node --test tests/e2e.test.mjs tests/policy.test.mjs tests/schedule.test.mjs"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "contextledger-demo-video",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts ContextLedgerDemo ContextLedger_Demo_90s.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --concurrency=4 && node scripts/master.mjs",
+    "thumbnail": "remotion still src/index.ts ContextLedgerThumbnail ContextLedger_Thumbnail.png",
+    "captions": "node scripts/export-captions.mjs",
+    "thumbnail-source": "node scripts/thumbnail-source.mjs",
+    "verify": "node scripts/verify.mjs",
+    "render:google": "node scripts/render-google.mjs"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.541",
+    "@remotion/cli": "4.0.541",
+    "@remotion/media": "4.0.541",
+    "@remotion/renderer": "4.0.541",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.541"
+  },
+  "devDependencies": {
+    "@ffmpeg-installer/ffmpeg": "1.1.0",
+    "@ffprobe-installer/ffprobe": "2.1.2"
+  }
+}

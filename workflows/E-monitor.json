@@ -1,0 +1,521 @@
+{
+  "id": "CLMonitor0000001",
+  "name": "ContextLedger · E / Monitor knowledge quality",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 01 · Daily at 09:00 UTC or on demand\nA scheduled run acts as the steward. On-demand reports require admin access.",
+        "width": 735,
+        "height": 410,
+        "color": 7
+      },
+      "id": "258d3042-e498-e103-1cf1-2c1e6276826b",
+      "name": "01 Trigger and gate",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 02 · Check time-driven drift\nRe-scan for overdue approvals and refresh the snapshot after B commits its findings.",
+        "width": 440,
+        "height": 410,
+        "color": 5
+      },
+      "id": "dacd7ab1-1068-e844-4598-02d280463053",
+      "name": "02 Refresh",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        735,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 03 · Group actionable issues\nWrite a daily owner-grouped report and a deduplicated mock Slack outbox. Manual requests return the report.",
+        "width": 885,
+        "height": 410,
+        "color": 4
+      },
+      "id": "41918589-202e-0b79-c670-2826c65c8d44",
+      "name": "03 Report",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1175,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "contextledger/monitor",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1dc9e7e8-1bd4-5c4a-5cc1-b480fa8d4b87",
+      "name": "Request report",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        40,
+        150
+      ],
+      "webhookId": "924e78c7-d12f-6b28-9f8f-28f969d6f476"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "b4a50a56-b4ee-4c17-7982-202c861333dc",
+      "name": "Daily 09:00 UTC",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        40,
+        290
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { authorization: $json.headers?.authorization ?? null, adminOnly: true } }];"
+      },
+      "id": "275a3af5-cf12-7c36-688b-166be5c10f7a",
+      "name": "Read operator identity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { system: true } }];"
+      },
+      "id": "45b4fefd-7f63-95bd-d90b-ef2ce6eb1b37",
+      "name": "Use scheduler identity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        290
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.CONTEXTLEDGER_INTERNAL_URL || 'http://127.0.0.1:5679') + '/snapshot' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ledger-Key",
+              "value": "={{ $env.CONTEXTLEDGER_INTERNAL_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "fe319459-32b7-02bd-1320-8d5f28aa8fa8",
+      "name": "Verify operator",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        405,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "45f7d6cb-9ac4-1ce1-83da-1a2e0c3d10d9",
+              "leftValue": "={{ $json.actor != null && !$json.denied }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "109c3ae7-1c2d-fced-470a-e2ed6cfbe5ce",
+      "name": "Operator authorized?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        590,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "CLDetect00000001",
+          "mode": "id"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "0b2f8acc-b3f7-6641-308e-c7b758f70669",
+      "name": "Call B · check revalidation",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        780,
+        175
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.CONTEXTLEDGER_INTERNAL_URL || 'http://127.0.0.1:5679') + '/snapshot' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ledger-Key",
+              "value": "={{ $env.CONTEXTLEDGER_INTERNAL_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Read operator identity').isExecuted ? $('Read operator identity').first().json : { system: true }) }}",
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "7f606d94-685f-c716-b92a-5919bc82dd25",
+      "name": "Read post-scan state",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        970,
+        175
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { createHash, randomUUID } = require('crypto');\nconst sha = value => createHash('sha256').update(value).digest('hex');\nconst now = new Date().toISOString();\nconst daysAfter = (date, days) => new Date(Date.parse(date) + days * 86400000).toISOString();\nconst reply = (httpCode, payload) => ({ httpCode, payload, writes: [] });\nconst identityError = snapshot => snapshot.actor\n  ? reply(403, { status: 'denied' })\n  : reply(401, { status: 'authentication_required' });\nconst put = (collection, row) => ({ collection, row });\nconst audit = (event, actor, fields) => put('audit', { id: randomUUID(), event, actor, at: now, ...fields });\nconst clean = value => typeof value === 'string' ? value.trim() : '';\nconst validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) &&\n  new Date(value).toISOString() === value;\nconst hasScope = (actor, item) => Array.isArray(actor.groups) && Array.isArray(item?.allowed_groups) &&\n  item.allowed_groups.length > 0 && item.allowed_groups.every(group => actor.groups.includes(group));\nconst sameScope = (a, b) => a && b && a.classification === b.classification &&\n  JSON.stringify(a.allowed_groups) === JSON.stringify(b.allowed_groups);\nconst byId = rows => new Map(rows.map(row => [row.id, row]));\nconst isOpen = review => ['pending', 'clarification_requested'].includes(review.status);\n\nfunction latestBy(rows, key, order) {\n  const latest = new Map();\n  for (const row of rows) {\n    const previous = latest.get(row[key]);\n    if (!previous || previous[order] < row[order]) latest.set(row[key], row);\n  }\n  return [...latest.values()];\n}\nconst observations = state => latestBy(state.observations, 'knowledge_id', 'last_modified_at');\nconst authorities = state => latestBy(state.authority, 'stream', 'version');\nfunction evidenceVersion(version, versions) {\n  let basis = version;\n  let prior = versions.get(basis.supersedes);\n  // Renewing verification keeps the decision attached to the same evidence.\n  while (prior && prior.observation_id === basis.observation_id) {\n    basis = prior;\n    prior = versions.get(basis.supersedes);\n  }\n  return basis.id;\n}\nconst knownClaims = {\n  window_hours: /\\bwithin (\\d{1,4}) hours?\\b/gi,\n  limit_usd: /\\bup to USD (\\d{1,6})\\b/gi,\n  interval_days: /\\bevery (\\d{1,4}) days?\\b/gi\n};\nfunction extractClaim(key, content) {\n  if (!key) return null;\n  const matches = [...content.matchAll(knownClaims[key])];\n  const values = [...new Set(matches.map(match => Number(match[1])))];\n  if (values.length !== 1 || values[0] <= 0) return null;\n  return { key, value: values[0], quote: matches[0][0], offset: matches[0].index };\n}\nfunction citation(item) {\n  return {\n    source_system: item.source_system, source_document_id: item.source_document_id,\n    source_url: item.source_url, title: item.title, revision_id: item.id,\n    content_hash: item.content_hash, last_modified_at: item.last_modified_at,\n    claim: item.claim, provenance: item.provenance\n  };\n}\nfunction evidenceText(item) {\n  if (!item.claim) return item.content;\n  const end = item.content.indexOf('.', item.claim.offset + item.claim.quote.length);\n  const start = item.content.lastIndexOf('.', item.claim.offset);\n  return item.content.slice(start + 1, end < 0 ? undefined : end + 1).trim();\n}\nfunction issuePriority(type, record) {\n  if (record?.classification === 'restricted' || (type === 'conflict' && record?.topic === 'customer-escalation')) return 'high';\n  return 'normal';\n}\nfunction verifiedVersion(item, stream, prior, reviewer, verification, approvedAt) {\n  const version = (prior?.version ?? 0) + 1;\n  return {\n    id: stream + ':v' + version, stream, topic: item.topic, department: item.department,\n    owner: prior?.owner ?? item.owner, version, supersedes: prior?.id ?? null,\n    observation_id: item.id, knowledge_id: item.knowledge_id, title: item.title,\n    classification: item.classification, allowed_groups: item.allowed_groups, approval_status: 'approved',\n    last_verified_at: verification, review_due_at: approvedAt === 'bootstrap' ? item.source_review_due_at : daysAfter(verification, 90),\n    approved_by: reviewer, approved_at: approvedAt === 'bootstrap' ? null : approvedAt,\n    confidence: 'owner_verified', claim: item.claim\n  };\n}\n\nfunction monitor(snapshot) {\n  const state = snapshot.data;\n  const current = authorities(state);\n  const latest = observations(state);\n  const versions = byId(state.authority);\n  const currentByEvidenceVersion = new Map(current.map(version => [evidenceVersion(version, versions), version]));\n  const groups = new Map();\n  const writes = [];\n  const duplicateSets = new Map();\n\n  function add(owner, department, kind, subject, action) {\n    const key = owner || 'knowledge-admin';\n    if (!groups.has(key)) groups.set(key, []);\n    groups.get(key).push({ department, kind, subject, action });\n  }\n  for (const item of latest) {\n    if (!item.owner) add(null, item.department, 'missing_owner', item.title, 'Ask the department champion to add the designated owner in the source.');\n    const key = JSON.stringify([item.topic, item.content_hash, item.classification, item.allowed_groups]);\n    if (!duplicateSets.has(key)) duplicateSets.set(key, []);\n    duplicateSets.get(key).push(item);\n  }\n  const duplicates = [...duplicateSets.values()].filter(items => items.length > 1);\n  for (const items of duplicates) {\n    const [first] = items;\n    add(first.owner, first.department, 'duplicate', items.map(item => item.provenance.locator).sort().join(' and '),\n      'Keep a link to the approved source and retire redundant copies after checking their consumers.');\n  }\n  for (const version of current.filter(row => row.review_due_at < now)) {\n    add(version.owner, version.department, 'overdue', version.title, 'Review the original source in the review desk.');\n  }\n  for (const row of state.quarantine.filter(item => item.status === 'open')) {\n    add(null, 'Platform', 'invalid_metadata', row.id, 'Correct source fields: ' + row.errors.join(', ') + '. Re-run ingestion.');\n  }\n  for (const feed of state.feeds.filter(row => row.status === 'failed')) {\n    add(null, 'Platform', 'source_failure', feed.id, 'Check endpoint health and authentication, then re-run ingestion.');\n  }\n  for (const review of state.reviews.filter(isOpen)) {\n    const contributionPending = review.kind === 'contribution' && review.status === 'pending';\n    add(contributionPending ? 'knowledge-admin' : review.owner, review.department, review.kind, review.topic,\n      contributionPending ? 'Review the owner submission and decide whether to publish it.' :\n        'Open the review desk, compare evidence and record an action.');\n  }\n  const closed = state.reviews.filter(review => !isOpen(review)).map(review => ({\n    topic: review.topic, status: review.status, kind: review.kind, review_id: review.id, resulting_version: review.version ?? null\n  }));\n  for (const review of state.reviews.filter(row => row.kind === 'conflict' && row.status === 'approved')) {\n    const authority = currentByEvidenceVersion.get(review.resulting_version);\n    if (!authority) continue;\n    const reviewedEvidence = new Set(review.evidence_ids);\n    for (const item of latest.filter(row => reviewedEvidence.has(row.id) && row.claim && row.claim.value !== authority.claim?.value)) {\n      add(authority.owner, authority.department, 'source_alignment', item.provenance.locator,\n        'Update the old source or replace it with a link to the authoritative policy.');\n    }\n  }\n  const grouped = [...groups].sort(([a], [b]) => a.localeCompare(b)).map(([owner, issues]) => ({\n    owner, issues: issues.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))\n  }));\n  const report = {\n    id: now.slice(0, 10), generated_at: now, grouped, resolved_reviews: closed,\n    counts: {\n      latest_records: latest.length,\n      complete_records: latest.filter(item => item.owner && (!snapshot.taxonomy.topics[item.topic][2] || item.claim)).length,\n      owned_records: latest.filter(item => item.owner).length,\n      quarantined_records: state.quarantine.filter(item => item.status === 'open').length,\n      authoritative_topics: new Set(current.map(version => version.topic)).size,\n      authority_versions: state.authority.length,\n      current_streams: current.length,\n      current_fresh_streams: current.filter(version => version.review_due_at >= now).length,\n      duplicate_groups: duplicates.length,\n      duplicate_surplus_records: duplicates.reduce((count, items) => count + items.length - 1, 0),\n      open_reviews: state.reviews.filter(isOpen).length,\n      audit_events: state.audit.length\n    },\n    audit_tail: state.audit.slice(-15).map(({ event, actor, at, topic, review_id, resulting_version }) =>\n      ({ event, actor, at, topic, review_id, resulting_version }))\n  };\n  writes.push(put('reports', report));\n  const sent = byId(state.notifications);\n  for (const { owner, issues } of grouped) {\n    // Mock Slack outbox. A stable fingerprint prevents repeated reminders for the same issue set on the same day.\n    const id = 'notice-' + sha(JSON.stringify([report.id, owner, issues]));\n    if (sent.has(id)) continue;\n    writes.push(put('notifications', { id, channel: 'mock-slack', recipient: owner, issue_count: issues.length,\n      report_date: report.id, created_at: now, status: 'queued_mock' }));\n  }\n  return { ...reply(200, { status: 'reported', ...report, new_mock_notifications: writes.length - 1 }), writes };\n}\n\nreturn [{ json: monitor($json) }];"
+      },
+      "id": "f48f0900-d36f-9d02-2053-22340d099c9d",
+      "name": "Group issues and prepare outbox",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        175
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.CONTEXTLEDGER_INTERNAL_URL || 'http://127.0.0.1:5679') + '/commit' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ledger-Key",
+              "value": "={{ $env.CONTEXTLEDGER_INTERNAL_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ revision: $('Read post-scan state').first().json.revision, writes: $('Group issues and prepare outbox').first().json.writes }) }}",
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "150f9174-ce41-e160-f55c-64fe54ffc553",
+      "name": "Persist report and reminders",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1405,
+        175
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $json.committed ? $('Group issues and prepare outbox').first().json : { httpCode: 409, payload: { status: 'state_changed', message: 'Refresh and retry.' } } }];"
+      },
+      "id": "6f07a350-d4e9-2dda-2b49-a996e48177c4",
+      "name": "Return committed report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1580,
+        175
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a794d660-0868-a39a-a6f3-2ea5de8913c9",
+              "leftValue": "={{ $('Read operator identity').isExecuted }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4dfe996c-33fb-5aa8-d2cd-56f585f8c32a",
+      "name": "Manual request?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        175
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {
+          "responseCode": "={{ $json.httpCode }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "id": "71b85324-819e-c734-b587-5f505cd85ea8",
+      "name": "Return admin quality report",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1930,
+        155
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $json.actor ? { httpCode: 403, payload: { status: 'denied' } } : { httpCode: 401, payload: { status: 'authentication_required' } } }];"
+      },
+      "id": "c4b91095-d405-1549-5580-bc857dc17677",
+      "name": "Deny report access",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        450
+      ]
+    }
+  ],
+  "connections": {
+    "Request report": {
+      "main": [
+        [
+          {
+            "node": "Read operator identity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read operator identity": {
+      "main": [
+        [
+          {
+            "node": "Verify operator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify operator": {
+      "main": [
+        [
+          {
+            "node": "Operator authorized?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Operator authorized?": {
+      "main": [
+        [
+          {
+            "node": "Call B · check revalidation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Deny report access",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call B · check revalidation": {
+      "main": [
+        [
+          {
+            "node": "Read post-scan state",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read post-scan state": {
+      "main": [
+        [
+          {
+            "node": "Group issues and prepare outbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group issues and prepare outbox": {
+      "main": [
+        [
+          {
+            "node": "Persist report and reminders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Persist report and reminders": {
+      "main": [
+        [
+          {
+            "node": "Return committed report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return committed report": {
+      "main": [
+        [
+          {
+            "node": "Manual request?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual request?": {
+      "main": [
+        [
+          {
+            "node": "Return admin quality report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 09:00 UTC": {
+      "main": [
+        [
+          {
+            "node": "Use scheduler identity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use scheduler identity": {
+      "main": [
+        [
+          {
+            "node": "Verify operator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deny report access": {
+      "main": [
+        [
+          {
+            "node": "Return admin quality report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "UTC",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "tags": []
+}

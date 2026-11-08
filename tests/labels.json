@@ -1,0 +1,22 @@
+{
+  "claimCases": [
+    {"topic":"customer-escalation","candidate":"support-decision","conflict":true},
+    {"topic":"customer-escalation","candidate":"support-playbook","conflict":false},
+    {"topic":"refund-approval","candidate":"refund-proposal","conflict":true},
+    {"topic":"key-rotation","candidate":"rotation-legacy","conflict":true}
+  ],
+  "questions": [
+    {"role":"employee","question":"What is the current escalation policy?","status":"verified","source":"support-decision","text":"48 hours"},
+    {"role":"employee","question":"Which team owns the incident response process?","status":"verified","source":"incident-ownership","text":"Engineering owns"},
+    {"role":"employee","question":"When was the escalation policy last verified?","status":"verified","source":"support-decision","text":"Last verified on"},
+    {"role":"employee","question":"What changed in the escalation policy?","status":"verified","source":"support-decision","text":"24 hours"},
+    {"role":"employee","question":"Can I access the internal security runbook?","status":"abstained"},
+    {"role":"support","question":"How do I open Quartz Vault?","status":"abstained"},
+    {"role":"security","question":"What does the security runbook say?","status":"verified","source":"quartz-containment","text":"Quartz Vault"},
+    {"role":"employee","question":"Who books flights to Mars?","status":"abstained"},
+    {"role":"admin","question":"Show pilot feedback","status":"abstained"},
+    {"role":"security","question":"What is the access review policy?","status":"stale"},
+    {"role":"employee","question":"What is the refund threshold?","status":"verified","source":"refund-authority","text":"USD 250"},
+    {"role":"employee","question":"What is the expense policy?","status":"verified","source":"expense-guide","text":"itemized receipts"}
+  ]
+}

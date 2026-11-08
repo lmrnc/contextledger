@@ -1,0 +1,572 @@
+{
+  "id": "CLIngest00000001",
+  "name": "ContextLedger · A / Ingest source evidence",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 01 · Operator gate\nResolve the bearer token server-side. Only the platform steward can fetch synthetic sources.",
+        "width": 560,
+        "height": 330,
+        "color": 7
+      },
+      "id": "920997fb-6c90-5b32-6dbc-edc5e580bf14",
+      "name": "01 Access",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 02 · Read the three feeds\nEach request retries independently. A failed feed leaves its previous observations intact.",
+        "width": 605,
+        "height": 330,
+        "color": 5
+      },
+      "id": "f33339ac-6b59-7859-d678-a80a6d3b6b7c",
+      "name": "02 Adapters",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 03 · Normalize and commit\nValidate taxonomy, extract claims, deduplicate revisions and attest the seed baseline.",
+        "width": 570,
+        "height": 330,
+        "color": 4
+      },
+      "id": "e4ea33ca-04e8-84e8-e0a4-54aa492fe97c",
+      "name": "03 Commit",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1165,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 04 · Detect drift\nCall B after durable ingestion. Review candidates never become authoritative here.",
+        "width": 545,
+        "height": 330,
+        "color": 6
+      },
+      "id": "9fac69a7-7111-f540-bdcc-fc19c9017ce8",
+      "name": "04 Scan",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1735,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "contextledger/ingest",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "2420d74a-1a76-f307-5bec-ef2e8f066e2e",
+      "name": "Run ingestion",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        45,
+        160
+      ],
+      "webhookId": "10f0c073-a4a1-7669-8b17-a8a261c7348d"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.CONTEXTLEDGER_INTERNAL_URL || 'http://127.0.0.1:5679') + '/snapshot' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ledger-Key",
+              "value": "={{ $env.CONTEXTLEDGER_INTERNAL_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ authorization: $('Run ingestion').first().json.headers?.authorization ?? null, adminOnly: true }) }}",
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "315db4a8-8066-c5ff-b72c-c829663f4f0f",
+      "name": "Resolve admin and read ledger",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        230,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3f015a63-79f2-34e7-4984-370588a97cd4",
+              "leftValue": "={{ $json.actor != null && !$json.denied }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c1571970-17dd-7ac1-dfae-ebe84bf9b0c6",
+      "name": "Admin verified?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        405,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ ($env.CONTEXTLEDGER_INTERNAL_URL || 'http://127.0.0.1:5679') + '/feed/slack?scenario=' + encodeURIComponent(['revision','malformed','outage-slack','outage-notion','outage-operations'].includes($('Run ingestion').first().json.body?.scenario) ? $('Run ingestion').first().json.body.scenario : '') + '' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ledger-Key",
+              "value": "={{ $env.CONTEXTLEDGER_INTERNAL_KEY }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "64d9492a-fc18-ec49-35c1-80442dd1a3fc",
+      "name": "Fetch Slack messages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        610,
+        160
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 750,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ ($env.CONTEXTLEDGER_INTERNAL_URL || 'http://127.0.0.1:5679') + '/feed/notion?scenario=' + encodeURIComponent(['revision','malformed','outage-slack','outage-notion','outage-operations'].includes($('Run ingestion').first().json.body?.scenario) ? $('Run ingestion').first().json.body.scenario : '') + '' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ledger-Key",
+              "value": "={{ $env.CONTEXTLEDGER_INTERNAL_KEY }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "5462ea05-5cb1-ab2e-f676-6c6a1b967652",
+      "name": "Fetch Notion pages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        795,
+        160
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 750,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ ($env.CONTEXTLEDGER_INTERNAL_URL || 'http://127.0.0.1:5679') + '/feed/operations?scenario=' + encodeURIComponent(['revision','malformed','outage-slack','outage-notion','outage-operations'].includes($('Run ingestion').first().json.body?.scenario) ? $('Run ingestion').first().json.body.scenario : '') + '' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ledger-Key",
+              "value": "={{ $env.CONTEXTLEDGER_INTERNAL_KEY }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "660cc0be-65d7-4bca-5ea8-179752937ac0",
+      "name": "Fetch operations records",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        980,
+        160
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 750,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { createHash, randomUUID } = require('crypto');\nconst sha = value => createHash('sha256').update(value).digest('hex');\nconst now = new Date().toISOString();\nconst daysAfter = (date, days) => new Date(Date.parse(date) + days * 86400000).toISOString();\nconst reply = (httpCode, payload) => ({ httpCode, payload, writes: [] });\nconst identityError = snapshot => snapshot.actor\n  ? reply(403, { status: 'denied' })\n  : reply(401, { status: 'authentication_required' });\nconst put = (collection, row) => ({ collection, row });\nconst audit = (event, actor, fields) => put('audit', { id: randomUUID(), event, actor, at: now, ...fields });\nconst clean = value => typeof value === 'string' ? value.trim() : '';\nconst validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) &&\n  new Date(value).toISOString() === value;\nconst hasScope = (actor, item) => Array.isArray(actor.groups) && Array.isArray(item?.allowed_groups) &&\n  item.allowed_groups.length > 0 && item.allowed_groups.every(group => actor.groups.includes(group));\nconst sameScope = (a, b) => a && b && a.classification === b.classification &&\n  JSON.stringify(a.allowed_groups) === JSON.stringify(b.allowed_groups);\nconst byId = rows => new Map(rows.map(row => [row.id, row]));\nconst isOpen = review => ['pending', 'clarification_requested'].includes(review.status);\n\nfunction latestBy(rows, key, order) {\n  const latest = new Map();\n  for (const row of rows) {\n    const previous = latest.get(row[key]);\n    if (!previous || previous[order] < row[order]) latest.set(row[key], row);\n  }\n  return [...latest.values()];\n}\nconst observations = state => latestBy(state.observations, 'knowledge_id', 'last_modified_at');\nconst authorities = state => latestBy(state.authority, 'stream', 'version');\nfunction evidenceVersion(version, versions) {\n  let basis = version;\n  let prior = versions.get(basis.supersedes);\n  // Renewing verification keeps the decision attached to the same evidence.\n  while (prior && prior.observation_id === basis.observation_id) {\n    basis = prior;\n    prior = versions.get(basis.supersedes);\n  }\n  return basis.id;\n}\nconst knownClaims = {\n  window_hours: /\\bwithin (\\d{1,4}) hours?\\b/gi,\n  limit_usd: /\\bup to USD (\\d{1,6})\\b/gi,\n  interval_days: /\\bevery (\\d{1,4}) days?\\b/gi\n};\nfunction extractClaim(key, content) {\n  if (!key) return null;\n  const matches = [...content.matchAll(knownClaims[key])];\n  const values = [...new Set(matches.map(match => Number(match[1])))];\n  if (values.length !== 1 || values[0] <= 0) return null;\n  return { key, value: values[0], quote: matches[0][0], offset: matches[0].index };\n}\nfunction citation(item) {\n  return {\n    source_system: item.source_system, source_document_id: item.source_document_id,\n    source_url: item.source_url, title: item.title, revision_id: item.id,\n    content_hash: item.content_hash, last_modified_at: item.last_modified_at,\n    claim: item.claim, provenance: item.provenance\n  };\n}\nfunction evidenceText(item) {\n  if (!item.claim) return item.content;\n  const end = item.content.indexOf('.', item.claim.offset + item.claim.quote.length);\n  const start = item.content.lastIndexOf('.', item.claim.offset);\n  return item.content.slice(start + 1, end < 0 ? undefined : end + 1).trim();\n}\nfunction issuePriority(type, record) {\n  if (record?.classification === 'restricted' || (type === 'conflict' && record?.topic === 'customer-escalation')) return 'high';\n  return 'normal';\n}\nfunction verifiedVersion(item, stream, prior, reviewer, verification, approvedAt) {\n  const version = (prior?.version ?? 0) + 1;\n  return {\n    id: stream + ':v' + version, stream, topic: item.topic, department: item.department,\n    owner: prior?.owner ?? item.owner, version, supersedes: prior?.id ?? null,\n    observation_id: item.id, knowledge_id: item.knowledge_id, title: item.title,\n    classification: item.classification, allowed_groups: item.allowed_groups, approval_status: 'approved',\n    last_verified_at: verification, review_due_at: approvedAt === 'bootstrap' ? item.source_review_due_at : daysAfter(verification, 90),\n    approved_by: reviewer, approved_at: approvedAt === 'bootstrap' ? null : approvedAt,\n    confidence: 'owner_verified', claim: item.claim\n  };\n}\n\nconst feedAdapters = {\n  slack: {\n    list: body => body.messages,\n    fields: row => ({ sourceId: row.ts, title: row.subject, content: row.text, url: row.permalink,\n      created: row.posted_at, modified: row.edited_at, metadata: row.metadata })\n  },\n  notion: {\n    list: body => body.results,\n    fields: row => ({ sourceId: row.id, title: row.title,\n      content: Array.isArray(row.blocks) && row.blocks.every(block => typeof block?.text === 'string')\n        ? row.blocks.map(block => block.text).join('\\n') : null,\n      url: row.url, created: row.created_time, modified: row.last_edited_time, metadata: row.properties })\n  },\n  operations: {\n    list: body => body.records,\n    fields: row => ({ sourceId: row.record_id, title: row.summary, content: row.instructions, url: row.href,\n      created: row.opened_at, modified: row.updated_at, metadata: row.fields })\n  }\n};\nfunction normalize(system, raw, taxonomy) {\n  const fields = feedAdapters[system].fields(raw || {});\n  const { sourceId, title, content, url, created, modified } = fields;\n  const meta = fields.metadata || {};\n  const allowedGroups = taxonomy.classifications[meta.classification];\n  const groups = Array.isArray(meta.groups) ? [...new Set(meta.groups)].sort() : [];\n  const problems = [];\n  const topic = typeof meta.topic === 'string' && Object.hasOwn(taxonomy.topics, meta.topic) && taxonomy.topics[meta.topic];\n  if (typeof sourceId !== 'string' || !/^[a-z0-9-]{1,80}$/.test(sourceId)) problems.push('source_document_id');\n  if (!clean(title) || title.length > 150) problems.push('title');\n  if (!clean(content) || content.length > 12000) problems.push('content');\n  if (url !== 'https://northstar.example/' + system + '/' + sourceId) problems.push('source_url');\n  if (!topic || topic[0] !== meta.department) problems.push('topic_or_department');\n  if (!taxonomy.types.includes(meta.type)) problems.push('knowledge_type');\n  if (!validDate(created) || !validDate(modified) || created > modified || modified > now) problems.push('source_dates');\n  if (!validDate(meta.verified) || !validDate(meta.due) || meta.verified > meta.due || meta.verified > now) problems.push('verification_dates');\n  if (!Array.isArray(allowedGroups) || groups.length !== 1 || !groups.every(group => allowedGroups.includes(group))) {\n    problems.push('classification_or_groups');\n  }\n  if (problems.length) return { problems };\n  const text = clean(content);\n  const owner = meta.owner === taxonomy.departments[meta.department] ? meta.owner : null;\n  const reference = system + ':' + sourceId;\n  const rawHash = sha(JSON.stringify(raw));\n  return { item: {\n    id: 'rev-' + sha(reference + ':' + rawHash), knowledge_id: 'k-' + sha(reference),\n    source_system: system, source_document_id: sourceId, source_url: url,\n    title: clean(title), content: text, department: meta.department, topic: meta.topic,\n    knowledge_type: meta.type, owner, created_at: created, last_modified_at: modified,\n    source_verified_at: meta.verified, source_review_due_at: meta.due,\n    content_hash: sha(text), raw_hash: rawHash, classification: meta.classification,\n    allowed_groups: groups, approval_status: 'observed',\n    confidence: 'source_observation', claim: extractClaim(topic[2], text),\n    provenance: { adapter: system + '/v1', locator: reference, fetched_at: now }\n  } };\n}\n\nfunction ingest(snapshot, responses) {\n  const state = snapshot.data;\n  const revisionIds = new Set(state.observations.map(row => row.id));\n  const head = new Map(observations(state).map(row => [row.knowledge_id, row]));\n  const streams = new Set(state.authority.map(row => row.stream));\n  const priorFeeds = byId(state.feeds);\n  const quarantined = byId(state.quarantine);\n  const writes = [];\n  const summary = {};\n  for (const [system, response] of Object.entries(responses)) {\n    const totals = { inserted: 0, unchanged: 0, quarantined: 0, obsolete: 0, baseline_imported: 0 };\n    const body = response?.body ?? response;\n    const rows = feedAdapters[system].list(body || {});\n    const healthy = !response?.error && (response?.statusCode ?? 200) === 200 && Array.isArray(rows) && rows.length <= 500;\n    summary[system] = { status: healthy ? 'ok' : 'failed', ...totals };\n    const sourceSummary = summary[system];\n    if (priorFeeds.get(system)?.status !== sourceSummary.status) {\n      writes.push(put('feeds', { id: system, status: sourceSummary.status, at: now }));\n      writes.push(audit('feed_' + sourceSummary.status, snapshot.actor.id, { source_system: system }));\n    }\n    if (!healthy) continue;\n    const seenIds = new Set();\n    for (const [index, raw] of rows.entries()) {\n      const { item, problems } = normalize(system, raw, snapshot.taxonomy);\n      const previous = item && head.get(item.knowledge_id);\n      const errors = problems || [];\n      if (item && seenIds.has(item.knowledge_id)) errors.push('duplicate_source_id');\n      if (item) seenIds.add(item.knowledge_id);\n      if (previous && previous.last_modified_at === item.last_modified_at && previous.id !== item.id) {\n        errors.push('modified_time_collision');\n      }\n      const reportedId = clean(feedAdapters[system].fields(raw || {}).sourceId);\n      const quarantineId = system + ':' + (/^[a-z0-9-]{1,80}$/.test(reportedId) ? reportedId : 'row-' + index);\n      if (errors.length) {\n        const prior = quarantined.get(quarantineId);\n        if (prior?.status !== 'open' || JSON.stringify(prior.errors) !== JSON.stringify(errors)) {\n          writes.push(put('quarantine', { id: quarantineId, source_system: system, errors, status: 'open', at: now }));\n        }\n        sourceSummary.quarantined++;\n        continue;\n      }\n      if (quarantined.get(quarantineId)?.status === 'open') {\n        writes.push(put('quarantine', { ...quarantined.get(quarantineId), status: 'cleared', cleared_at: now }));\n      }\n      if (revisionIds.has(item.id)) {\n        sourceSummary.unchanged++;\n        continue;\n      }\n      if (previous && previous.last_modified_at > item.last_modified_at) {\n        sourceSummary.obsolete++;\n        continue;\n      }\n      revisionIds.add(item.id);\n      head.set(item.knowledge_id, item);\n      writes.push(put('observations', item));\n      sourceSummary.inserted++;\n      const attested = snapshot.manifests[system + ':' + item.source_document_id] === item.raw_hash;\n      const stream = item.topic + ':' + item.knowledge_id;\n      if (attested && item.owner && (!snapshot.taxonomy.topics[item.topic][2] || item.claim) &&\n          !streams.has(stream) && !state.authority.some(version => version.topic === item.topic && version.version > 1)) {\n        const entry = verifiedVersion(item, stream, null, 'baseline-migration', item.source_verified_at, 'bootstrap');\n        writes.push(put('authority', entry), audit('baseline_imported', snapshot.actor.id, { topic: item.topic, version_id: entry.id }));\n        streams.add(stream);\n        sourceSummary.baseline_imported++;\n      }\n    }\n  }\n  const failed = Object.values(summary).some(feed => feed.status === 'failed');\n  return { ...reply(failed ? 207 : 200, { status: failed ? 'partial' : 'ingested', sources: summary }), writes };\n}\n\nreturn [{ json: ingest($('Resolve admin and read ledger').first().json, { slack: $('Fetch Slack messages').first().json, notion: $('Fetch Notion pages').first().json, operations: $('Fetch operations records').first().json }) }];"
+      },
+      "id": "b12a3cbb-abf3-0f65-409f-d48a12df93b9",
+      "name": "Normalize, hash and validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1210,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.CONTEXTLEDGER_INTERNAL_URL || 'http://127.0.0.1:5679') + '/commit' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ledger-Key",
+              "value": "={{ $env.CONTEXTLEDGER_INTERNAL_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ revision: $('Resolve admin and read ledger').first().json.revision, writes: $('Normalize, hash and validate').first().json.writes }) }}",
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "e86d17a1-e8a5-7d0d-0660-98aea99f4ed2",
+      "name": "Commit source revisions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1395,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d47d6974-dde7-132b-f1b6-876b69509d41",
+              "leftValue": "={{ $json.committed === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ff6b158b-021a-5425-7cab-f8fb6c26f0e5",
+      "name": "Batch committed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1575,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "CLDetect00000001",
+          "mode": "id"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "4368df1d-d4a5-84f2-76cb-51632907b70c",
+      "name": "Call B · detect drift",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1785,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $('Normalize, hash and validate').first().json; return [{ json: { httpCode: $json.httpCode === 200 ? result.httpCode : 207, payload: { ...result.payload, scan: $json.payload } } }];"
+      },
+      "id": "9170e502-426f-e9e7-2f33-3a0cca1b303d",
+      "name": "Combine ingestion and scan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1965,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { httpCode: 409, payload: { status: 'state_changed', message: 'Refresh and retry.' } } }];"
+      },
+      "id": "56b81530-d54c-6f37-e019-53d4cba8790e",
+      "name": "Request safe retry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1775,
+        370
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $json.actor ? { httpCode: 403, payload: { status: 'denied' } } : { httpCode: 401, payload: { status: 'authentication_required' } } }];"
+      },
+      "id": "884aada5-a704-6aaa-5e8f-864e60908179",
+      "name": "Deny source access",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        625,
+        370
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {
+          "responseCode": "={{ $json.httpCode }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "id": "76fefb77-bd40-8577-2778-fa9cbf5835cf",
+      "name": "Return ingestion summary",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2165,
+        160
+      ]
+    }
+  ],
+  "connections": {
+    "Run ingestion": {
+      "main": [
+        [
+          {
+            "node": "Resolve admin and read ledger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve admin and read ledger": {
+      "main": [
+        [
+          {
+            "node": "Admin verified?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin verified?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Slack messages",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Deny source access",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Slack messages": {
+      "main": [
+        [
+          {
+            "node": "Fetch Notion pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Notion pages": {
+      "main": [
+        [
+          {
+            "node": "Fetch operations records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch operations records": {
+      "main": [
+        [
+          {
+            "node": "Normalize, hash and validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize, hash and validate": {
+      "main": [
+        [
+          {
+            "node": "Commit source revisions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit source revisions": {
+      "main": [
+        [
+          {
+            "node": "Batch committed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch committed?": {
+      "main": [
+        [
+          {
+            "node": "Call B · detect drift",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Request safe retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call B · detect drift": {
+      "main": [
+        [
+          {
+            "node": "Combine ingestion and scan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine ingestion and scan": {
+      "main": [
+        [
+          {
+            "node": "Return ingestion summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request safe retry": {
+      "main": [
+        [
+          {
+            "node": "Return ingestion summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deny source access": {
+      "main": [
+        [
+          {
+            "node": "Return ingestion summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "UTC",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "tags": []
+}

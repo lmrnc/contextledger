@@ -1,0 +1,166 @@
+TAP version 13
+# Subtest: published n8n workflows with an isolated Northstar ledger
+    # Subtest: 01 ingests all three API formats through workflow A
+    ok 1 - 01 ingests all three API formats through workflow A
+      ---
+      duration_ms: 359.8788
+      type: 'test'
+      ...
+    # Subtest: 02 re-ingestion and cross-source dedup preserve immutable revisions
+    ok 2 - 02 re-ingestion and cross-source dedup preserve immutable revisions
+      ---
+      duration_ms: 408.2693
+      type: 'test'
+      ...
+    # Subtest: 03 extracts metadata, quarantines bad scope and reports missing owner
+    ok 3 - 03 extracts metadata, quarantines bad scope and reports missing owner
+      ---
+      duration_ms: 374.0708
+      type: 'test'
+      ...
+    # Subtest: 04 detects labelled contradictions, with timestamps, authority and exact quotations
+    ok 4 - 04 detects labelled contradictions, with timestamps, authority and exact quotations
+      ---
+      duration_ms: 150.9604
+      type: 'test'
+      ...
+    # Subtest: 05 forged reviewer and invalid bearer cannot publish or see the queue
+    ok 5 - 05 forged reviewer and invalid bearer cannot publish or see the queue
+      ---
+      duration_ms: 551.3851
+      type: 'test'
+      ...
+    # Subtest: 06 clarification stays open and owner approval appends v2
+    ok 6 - 06 clarification stays open and owner approval appends v2
+      ---
+      duration_ms: 815.8785
+      type: 'test'
+      ...
+    # Subtest: 07 rejection preserves the approved refund policy
+    ok 7 - 07 rejection preserves the approved refund policy
+      ---
+      duration_ms: 125.1245
+      type: 'test'
+      ...
+    # Subtest: 08 restricted retrieval, citations, queue and report enforce authorization
+    ok 8 - 08 restricted retrieval, citations, queue and report enforce authorization
+      ---
+      duration_ms: 523.8152
+      type: 'test'
+      ...
+    # Subtest: 09 flags overdue approved knowledge and queues revalidation
+    ok 9 - 09 flags overdue approved knowledge and queues revalidation
+      ---
+      duration_ms: 394.6479
+      type: 'test'
+      ...
+    # Subtest: 10 retries a missing feed, records a controlled partial result and recovers
+    ok 10 - 10 retries a missing feed, records a controlled partial result and recovers
+      ---
+      duration_ms: 2258.752
+      type: 'test'
+      ...
+    # Subtest: 11 unsupported question and source prompt injection produce abstention
+    ok 11 - 11 unsupported question and source prompt injection produce abstention
+      ---
+      duration_ms: 138.5946
+      type: 'test'
+      ...
+    # Subtest: 12 fixed retrieval evaluation and exact citation verification
+    ok 12 - 12 fixed retrieval evaluation and exact citation verification
+      ---
+      duration_ms: 819.4607
+      type: 'test'
+      ...
+    # Subtest: 13 new source revision queues revalidation without replacing the current record
+    ok 13 - 13 new source revision queues revalidation without replacing the current record
+      ---
+      duration_ms: 390.4328
+      type: 'test'
+      ...
+    # Subtest: 14 MCP SDK client initializes, lists tools, and calls the authenticated n8n retrieval
+    ok 14 - 14 MCP SDK client initializes, lists tools, and calls the authenticated n8n retrieval
+      ---
+      duration_ms: 631.1234
+      type: 'test'
+      ...
+    # Subtest: 15 report persists and mock notification reminders are deduplicated
+    ok 15 - 15 report persists and mock notification reminders are deduplicated
+      ---
+      duration_ms: 358.5195
+      type: 'test'
+      ...
+    # Subtest: 16 a Security owner revalidates an overdue version with its original evidence
+    ok 16 - 16 a Security owner revalidates an overdue version with its original evidence
+      ---
+      duration_ms: 412.7787
+      type: 'test'
+      ...
+    # Subtest: 17 contribution intake enforces ownership, taxonomy, and claim validation
+    ok 17 - 17 contribution intake enforces ownership, taxonomy, and claim validation
+      ---
+      duration_ms: 530.9398
+      type: 'test'
+      ...
+    # Subtest: 18 first publication needs independent approval and returns submitted provenance
+    ok 18 - 18 first publication needs independent approval and returns submitted provenance
+      ---
+      duration_ms: 946.2916
+      type: 'test'
+      ...
+# Measured ratios [observed, total] {"measured_at":"2026-11-08T18:12:43.950Z","completeness":[36,37],"ownership":[36,37],"freshness":[24,25],"duplicate_groups_detected":[1,1],"conflict_precision":[3,3],"conflict_recall":[3,3],"retrieval_accuracy":[12,12],"citation_correctness":[8,8],"unauthorized_disclosures":[0,3],"synthetic_approval_turnaround_ms":[1753,2416]}
+    # Subtest: 19 restricted owner updates retain scope, enforce version checks and preserve v1 on rejection
+    ok 19 - 19 restricted owner updates retain scope, enforce version checks and preserve v1 on rejection
+      ---
+      duration_ms: 746.3649
+      type: 'test'
+      ...
+    1..19
+ok 1 - published n8n workflows with an isolated Northstar ledger
+  ---
+  duration_ms: 108429.0017
+  type: 'test'
+  ...
+# (node:23048) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: retrieval Code node abstains when two visible approved streams disagree
+ok 2 - retrieval Code node abstains when two visible approved streams disagree
+  ---
+  duration_ms: 6.0955
+  type: 'test'
+  ...
+# Subtest: a hidden approved stream cannot change a less privileged response
+ok 3 - a hidden approved stream cannot change a less privileged response
+  ---
+  duration_ms: 0.9896
+  type: 'test'
+  ...
+# Subtest: renewing an unchanged evidence revision preserves the resolved conflict and its source cleanup
+ok 4 - renewing an unchanged evidence revision preserves the resolved conflict and its source cleanup
+  ---
+  duration_ms: 5.1641
+  type: 'test'
+  ...
+# Subtest: SQLite rolls back an entire batch on an immutable history violation
+ok 5 - SQLite rolls back an entire batch on an immutable history violation
+  ---
+  duration_ms: 1.9719
+  type: 'test'
+  ...
+# (node:27244) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: published Schedule Trigger writes the quality report and mock Slack reminders
+ok 6 - published Schedule Trigger writes the quality report and mock Slack reminders
+  ---
+  duration_ms: 104815.7057
+  type: 'test'
+  ...
+1..6
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 108523.6755

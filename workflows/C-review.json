@@ -1,0 +1,380 @@
+{
+  "id": "CLReview00000001",
+  "name": "ContextLedger · C / Contributions and owner decisions",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 01 · Review Desk entry points\nList scoped cases, submit knowledge, or record a decision. Identity comes from a server-side token directory.",
+        "width": 550,
+        "height": 530,
+        "color": 7
+      },
+      "id": "83de9862-6947-6ea2-0299-e4d2bc6a21dc",
+      "name": "01 Requests",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 02 · Validate taxonomy and authority\nBind proposals to the current version and owner. A steward decides owner submissions.",
+        "width": 400,
+        "height": 530,
+        "color": 5
+      },
+      "id": "ce9d714b-8de7-bc17-a1d6-89d1f8c67a22",
+      "name": "02 Policy",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        550,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 03 · Commit evidence and audit\nSave proposals pending review. Approval alone appends a published version.",
+        "width": 560,
+        "height": 530,
+        "color": 4
+      },
+      "id": "8c5f6f0d-8bd0-46c9-0ca0-4b7d4f3de570",
+      "name": "03 Audit",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        950,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "contextledger/reviews",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "84535ea6-bea6-b057-694d-1a5838797e75",
+      "name": "List review cases",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        45,
+        155
+      ],
+      "webhookId": "0077ba18-97ab-5971-9127-11292dcbb1ea"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "contextledger/contribute",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "2c30ea52-28d4-6652-fdae-52f1d7fcea75",
+      "name": "Submit a contribution",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        45,
+        280
+      ],
+      "webhookId": "10cf3855-d10e-a579-6cae-427befbdc197"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "contextledger/decision",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "ec3f41f6-70fb-7dc6-bb39-bb82f6374d42",
+      "name": "Submit reviewer decision",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        45,
+        405
+      ],
+      "webhookId": "81ee87fc-606b-c444-02d4-334c47b04cbf"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { ...$json, route: $json.webhookUrl.split('/').at(-1) } }];"
+      },
+      "id": "99b02af5-465a-88d7-9050-cd1b110ea720",
+      "name": "Read Review Desk request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        225,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.CONTEXTLEDGER_INTERNAL_URL || 'http://127.0.0.1:5679') + '/snapshot' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ledger-Key",
+              "value": "={{ $env.CONTEXTLEDGER_INTERNAL_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ authorization: $('Read Review Desk request').first().json.headers?.authorization ?? null }) }}",
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "2b2a6ee5-ffa4-b6e1-91d4-b5055263fe7a",
+      "name": "Resolve actor and state",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { createHash, randomUUID } = require('crypto');\nconst sha = value => createHash('sha256').update(value).digest('hex');\nconst now = new Date().toISOString();\nconst daysAfter = (date, days) => new Date(Date.parse(date) + days * 86400000).toISOString();\nconst reply = (httpCode, payload) => ({ httpCode, payload, writes: [] });\nconst identityError = snapshot => snapshot.actor\n  ? reply(403, { status: 'denied' })\n  : reply(401, { status: 'authentication_required' });\nconst put = (collection, row) => ({ collection, row });\nconst audit = (event, actor, fields) => put('audit', { id: randomUUID(), event, actor, at: now, ...fields });\nconst clean = value => typeof value === 'string' ? value.trim() : '';\nconst validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) &&\n  new Date(value).toISOString() === value;\nconst hasScope = (actor, item) => Array.isArray(actor.groups) && Array.isArray(item?.allowed_groups) &&\n  item.allowed_groups.length > 0 && item.allowed_groups.every(group => actor.groups.includes(group));\nconst sameScope = (a, b) => a && b && a.classification === b.classification &&\n  JSON.stringify(a.allowed_groups) === JSON.stringify(b.allowed_groups);\nconst byId = rows => new Map(rows.map(row => [row.id, row]));\nconst isOpen = review => ['pending', 'clarification_requested'].includes(review.status);\n\nfunction latestBy(rows, key, order) {\n  const latest = new Map();\n  for (const row of rows) {\n    const previous = latest.get(row[key]);\n    if (!previous || previous[order] < row[order]) latest.set(row[key], row);\n  }\n  return [...latest.values()];\n}\nconst observations = state => latestBy(state.observations, 'knowledge_id', 'last_modified_at');\nconst authorities = state => latestBy(state.authority, 'stream', 'version');\nfunction evidenceVersion(version, versions) {\n  let basis = version;\n  let prior = versions.get(basis.supersedes);\n  // Renewing verification keeps the decision attached to the same evidence.\n  while (prior && prior.observation_id === basis.observation_id) {\n    basis = prior;\n    prior = versions.get(basis.supersedes);\n  }\n  return basis.id;\n}\nconst knownClaims = {\n  window_hours: /\\bwithin (\\d{1,4}) hours?\\b/gi,\n  limit_usd: /\\bup to USD (\\d{1,6})\\b/gi,\n  interval_days: /\\bevery (\\d{1,4}) days?\\b/gi\n};\nfunction extractClaim(key, content) {\n  if (!key) return null;\n  const matches = [...content.matchAll(knownClaims[key])];\n  const values = [...new Set(matches.map(match => Number(match[1])))];\n  if (values.length !== 1 || values[0] <= 0) return null;\n  return { key, value: values[0], quote: matches[0][0], offset: matches[0].index };\n}\nfunction citation(item) {\n  return {\n    source_system: item.source_system, source_document_id: item.source_document_id,\n    source_url: item.source_url, title: item.title, revision_id: item.id,\n    content_hash: item.content_hash, last_modified_at: item.last_modified_at,\n    claim: item.claim, provenance: item.provenance\n  };\n}\nfunction evidenceText(item) {\n  if (!item.claim) return item.content;\n  const end = item.content.indexOf('.', item.claim.offset + item.claim.quote.length);\n  const start = item.content.lastIndexOf('.', item.claim.offset);\n  return item.content.slice(start + 1, end < 0 ? undefined : end + 1).trim();\n}\nfunction issuePriority(type, record) {\n  if (record?.classification === 'restricted' || (type === 'conflict' && record?.topic === 'customer-escalation')) return 'high';\n  return 'normal';\n}\nfunction verifiedVersion(item, stream, prior, reviewer, verification, approvedAt) {\n  const version = (prior?.version ?? 0) + 1;\n  return {\n    id: stream + ':v' + version, stream, topic: item.topic, department: item.department,\n    owner: prior?.owner ?? item.owner, version, supersedes: prior?.id ?? null,\n    observation_id: item.id, knowledge_id: item.knowledge_id, title: item.title,\n    classification: item.classification, allowed_groups: item.allowed_groups, approval_status: 'approved',\n    last_verified_at: verification, review_due_at: approvedAt === 'bootstrap' ? item.source_review_due_at : daysAfter(verification, 90),\n    approved_by: reviewer, approved_at: approvedAt === 'bootstrap' ? null : approvedAt,\n    confidence: 'owner_verified', claim: item.claim\n  };\n}\n\nfunction contributionTopics(snapshot, canRead) {\n  const { actor, data, taxonomy } = snapshot;\n  const current = authorities(data);\n  const source = byId(data.observations);\n  const topics = [];\n  for (const [topic, [department, , claimKey]] of Object.entries(taxonomy.topics)) {\n    if (taxonomy.departments[department] !== actor.id) continue;\n    const versions = current.filter(row => row.topic === topic);\n    const base = versions[0];\n    if (versions.length > 1 || (base && (base.owner !== actor.id || !canRead(source.get(base.observation_id))))) continue;\n    const classifications = Object.entries(taxonomy.classifications)\n      .filter(([name]) => hasScope(actor, contributionScope(taxonomy, department, name)))\n      .map(([name]) => name);\n    if (!classifications.length) continue;\n    const evidence = base ? source.get(base.observation_id) : null;\n    topics.push({ topic, department, classifications: base ? [base.classification] : classifications, claim_key: claimKey,\n      base: base ? { id: base.id, version: base.version, title: evidence.title, content: evidence.content,\n        type: evidence.knowledge_type } : null });\n  }\n  return topics;\n}\n\nfunction contributionScope(taxonomy, department, classification) {\n  if (!Object.hasOwn(taxonomy.classifications, classification)) return null;\n  const group = classification === 'internal' ? 'employees' : taxonomy.departmentGroups[department];\n  if (!taxonomy.classifications[classification].includes(group)) return null;\n  return { classification, allowed_groups: [group] };\n}\n\nfunction submitContribution(snapshot, request, topics) {\n  const { actor, data } = snapshot;\n  const input = request || {};\n  const topic = topics.find(row => row.topic === input.topic);\n  if (!topic) return identityError(snapshot);\n  const base = topic.base;\n  if (input.base_version_id !== (base?.id ?? null)) {\n    return reply(409, { status: 'stale_base', message: 'The published version changed. Refresh the desk and compare your draft with the latest version.' });\n  }\n  const title = clean(input.title);\n  const content = clean(input.content);\n  const reason = clean(input.reason);\n  const type = input.knowledge_type;\n  const claim = extractClaim(topic.claim_key, content);\n  const scope = contributionScope(snapshot.taxonomy, topic.department, input.classification);\n  const issues = [];\n  if (title.length < 4 || title.length > 150) issues.push('Use a title of 4–150 characters.');\n  if (content.length < 20 || content.length > 12000) issues.push('Use 20–12,000 characters of knowledge text.');\n  if (reason.length < 10 || reason.length > 1000) issues.push('Explain the change in 10–1,000 characters.');\n  if (!snapshot.taxonomy.types.includes(type)) issues.push('Choose a knowledge type from the taxonomy.');\n  if (!scope || !topic.classifications.includes(scope.classification)) issues.push('Choose an allowed classification. Existing access scope is fixed.');\n  if (topic.claim_key && !claim) issues.push('Use one unambiguous policy value in the format shown for this topic.');\n  if (issues.length) return reply(422, { status: 'invalid_contribution', message: issues.join(' '), issues });\n\n  const reference = 'contribution:' + topic.topic;\n  const rawHash = sha(JSON.stringify([reference, actor.id, base?.id, scope, type, title, content, reason]));\n  const reviewId = 'review-' + rawHash.slice(0, 28);\n  const existing = data.reviews.find(row => row.id === reviewId);\n  if (existing) return reply(200, { status: existing.status, review_id: existing.id, replay: true });\n  const open = data.reviews.find(row => row.kind === 'contribution' && row.topic === topic.topic && isOpen(row));\n  if (open?.status === 'pending') {\n    return reply(409, { status: 'contribution_pending', message: 'A proposal for this topic is already waiting for review.' });\n  }\n  const head = authorities(data).find(row => row.id === base?.id);\n  const id = 'rev-' + rawHash;\n  const candidate = {\n    id, knowledge_id: 'k-' + sha(reference), source_system: 'contribution', source_document_id: topic.topic,\n    source_url: 'https://northstar.example/contribution/' + id, title, content, department: topic.department,\n    topic: topic.topic, knowledge_type: type, owner: actor.id, created_at: now, last_modified_at: now,\n    source_verified_at: null, source_review_due_at: null, content_hash: sha(content), raw_hash: rawHash,\n    ...scope, approval_status: 'observed', confidence: 'source_observation', claim,\n    provenance: { adapter: 'review-desk/v1', locator: reference, submitted_by: actor.id, submitted_at: now, review_id: reviewId }\n  };\n  const review = {\n    id: reviewId, kind: 'contribution', topic: topic.topic, department: topic.department, owner: actor.id, submitted_by: actor.id,\n    base_ids: head ? [head.id] : [], candidate_id: id, evidence_ids: head ? [head.observation_id, id] : [id],\n    explanation: reason, proposed_action: 'A knowledge steward checks the wording, evidence and audience before publication.',\n    priority: issuePriority('contribution', candidate), status: 'pending', created_at: now, history: []\n  };\n  const writes = [put('observations', candidate), put('reviews', review),\n    audit('contribution_submitted', actor.id, { topic: topic.topic, review_id: reviewId, observation_id: id })];\n  if (open) {\n    writes.push(put('reviews', { ...open, status: 'superseded', closed_at: now }),\n      audit('review_superseded', actor.id, { topic: topic.topic, review_id: open.id, replaced_by: reviewId }));\n  }\n  return { ...reply(201, { status: 'pending', review_id: reviewId, topic: topic.topic }), writes };\n}\n\nfunction viewReview(snapshot, request, route) {\n  if (!snapshot.actor || snapshot.denied) return identityError(snapshot);\n  const state = snapshot.data;\n  const actor = snapshot.actor;\n  const source = byId(state.observations);\n  const versions = byId(state.authority);\n  const latest = new Map(observations(state).map(item => [item.knowledge_id, item]));\n  const quarantined = new Set(state.quarantine.filter(row => row.status === 'open').map(row => row.id));\n  const canRead = item => {\n      const head = latest.get(item?.knowledge_id);\n      return hasScope(actor, item) && hasScope(actor, head) && !quarantined.has(item.provenance.locator);\n  };\n  const visible = review => (actor.admin || actor.id === review.owner) &&\n    review.evidence_ids.length > 0 && review.evidence_ids.every(id => canRead(source.get(id)));\n  const canDecide = review => visible(review) && (review.kind !== 'contribution' ||\n    (actor.admin === true && actor.id !== review.submitted_by));\n  if (route === 'contribute') return submitContribution(snapshot, request, contributionTopics(snapshot, canRead));\n  if (route === 'reviews') {\n    const queues = state.reviews.filter(visible).map(review => ({\n      ...review,\n      can_decide: canDecide(review),\n      current: review.base_ids.map(id => versions.get(id)).filter(Boolean).map(version => ({\n        version: version.version, verification: version.last_verified_at, claim: version.claim,\n        content: source.get(version.observation_id).content\n      })),\n      proposed: review.candidate_id ? source.get(review.candidate_id).content : null,\n      evidence: review.evidence_ids.map(id => {\n        const item = source.get(id);\n        return { ...citation(item), classification: item.classification,\n          authority_rank: snapshot.taxonomy.sourceAuthority[item.source_system],\n          approval_status: review.base_ids.some(baseId => versions.get(baseId)?.observation_id === id)\n            ? 'approved baseline' : 'source observation',\n          excerpt: item.content };\n      })\n    }));\n    const topics = contributionTopics(snapshot, canRead);\n    return reply(200, { status: 'ok', reviewer: actor.id, admin: !!actor.admin, reviews: queues,\n      contribution: { topics, types: topics.length ? snapshot.taxonomy.types : [] } });\n  }\n  const { review_id, decision, note } = request || {};\n  if (typeof review_id !== 'string' || !/^review-[a-f0-9]{28}$/.test(review_id) ||\n      !['approve', 'reject', 'clarify'].includes(decision) || typeof note !== 'string' ||\n      clean(note).length < 5 || note.length > 1000) {\n    return reply(400, { status: 'invalid_decision', message: 'Choose an action and enter a note of 5–1000 characters.' });\n  }\n  const review = state.reviews.find(row => row.id === review_id);\n  if (!review || !canDecide(review)) {\n    return { ...identityError(snapshot), writes: [audit('decision_denied', actor.id, {})] };\n  }\n  if (!isOpen(review)) return reply(409, { status: 'already_decided' });\n  const event = { decision, reviewer: actor.id, at: now, note: clean(note) };\n  const updated = { ...review, history: [...review.history, event] };\n  const writes = [];\n  if (decision === 'approve') {\n    const current = authorities(state).filter(row => row.topic === review.topic);\n    const base = current[0];\n    const candidate = source.get(review.candidate_id);\n    const candidateHead = observations(state).find(item => item.knowledge_id === candidate?.knowledge_id);\n    const firstPublication = review.kind === 'contribution' && !current.length && !review.base_ids.length;\n    const matchingBase = current.length === 1 && review.base_ids.length === 1 && review.base_ids[0] === base.id &&\n      candidate?.owner === base.owner && sameScope(candidate, base);\n    if ((!firstPublication && !matchingBase) || !candidate || candidateHead?.id !== candidate.id ||\n        !candidate.owner || candidate.owner !== snapshot.taxonomy.departments[candidate.department] ||\n        (snapshot.taxonomy.topics[review.topic][2] && !candidate.claim)) {\n      return reply(409, { status: 'requires_reconciliation', message: 'This evidence, scope or base version changed. Refresh the source and ask the platform steward to reconcile.' });\n    }\n    const entry = verifiedVersion(candidate, base?.stream || candidate.topic + ':' + candidate.knowledge_id, base, actor.id, now, now);\n    updated.status = 'approved';\n    updated.resulting_version = entry.id;\n    updated.version = entry.version;\n    writes.push(put('authority', entry));\n    for (const stale of state.reviews.filter(row => row.id !== review.id && row.topic === review.topic &&\n        isOpen(row) && (base ? row.base_ids.includes(base.id) : !row.base_ids.length && row.kind === 'contribution'))) {\n      writes.push(put('reviews', { ...stale, status: 'superseded', closed_at: now, resulting_version: entry.id }));\n      writes.push(audit('review_superseded', actor.id, { review_id: stale.id, topic: stale.topic, version_id: entry.id }));\n    }\n  } else {\n    updated.status = decision === 'reject' ? 'rejected' : 'clarification_requested';\n  }\n  if (!isOpen(updated)) updated.closed_at = now;\n  writes.push(put('reviews', updated), audit('decision_' + decision, actor.id, {\n    review_id, topic: review.topic, note: event.note, resulting_version: updated.resulting_version || null\n  }));\n  return { ...reply(200, { status: updated.status, review_id, reviewer: actor.id, decided_at: now,\n    authoritative_version: updated.version ?? null, resulting_version: updated.resulting_version ?? null }), writes };\n}\n\nreturn [{ json: viewReview($json, $('Read Review Desk request').first().json.body, $('Read Review Desk request').first().json.route) }];"
+      },
+      "id": "166eea79-36c2-d431-f296-e35c40bb7307",
+      "name": "Validate contribution or decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        595,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e8c0fa21-e254-abe2-f894-e1df48f96049",
+              "leftValue": "={{ $json.writes.length > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "faf39efa-c46e-ece0-a57d-7564d0f6da74",
+      "name": "Ledger write needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        770,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.CONTEXTLEDGER_INTERNAL_URL || 'http://127.0.0.1:5679') + '/commit' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ledger-Key",
+              "value": "={{ $env.CONTEXTLEDGER_INTERNAL_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ revision: $('Resolve actor and state').first().json.revision, writes: $('Validate contribution or decision').first().json.writes }) }}",
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "8ce62cad-6f59-c881-5fb7-f9713486339a",
+      "name": "Commit proposal or decision",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        995,
+        245
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $json.committed ? $('Validate contribution or decision').first().json : { httpCode: 409, payload: { status: 'state_changed', message: 'Refresh and retry.' } } }];"
+      },
+      "id": "18d516fa-64f7-297c-c67c-5fd06f5cc54e",
+      "name": "Confirm committed outcome",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1160,
+        245
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {
+          "responseCode": "={{ $json.httpCode }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "id": "c60cee9c-d2c5-8066-7ddb-3a7d2952dd98",
+      "name": "Return Review Desk outcome",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1340,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "List review cases": {
+      "main": [
+        [
+          {
+            "node": "Read Review Desk request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Review Desk request": {
+      "main": [
+        [
+          {
+            "node": "Resolve actor and state",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve actor and state": {
+      "main": [
+        [
+          {
+            "node": "Validate contribution or decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate contribution or decision": {
+      "main": [
+        [
+          {
+            "node": "Ledger write needed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ledger write needed?": {
+      "main": [
+        [
+          {
+            "node": "Commit proposal or decision",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Review Desk outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit proposal or decision": {
+      "main": [
+        [
+          {
+            "node": "Confirm committed outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirm committed outcome": {
+      "main": [
+        [
+          {
+            "node": "Return Review Desk outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Submit reviewer decision": {
+      "main": [
+        [
+          {
+            "node": "Read Review Desk request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Submit a contribution": {
+      "main": [
+        [
+          {
+            "node": "Read Review Desk request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "UTC",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "tags": []
+}

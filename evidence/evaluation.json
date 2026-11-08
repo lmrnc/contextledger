@@ -1,0 +1,205 @@
+{
+  "measured_at": "2026-11-08T18:12:43.950Z",
+  "completeness": [
+    36,
+    37
+  ],
+  "ownership": [
+    36,
+    37
+  ],
+  "freshness": [
+    24,
+    25
+  ],
+  "duplicate_groups_detected": [
+    1,
+    1
+  ],
+  "conflict_precision": [
+    3,
+    3
+  ],
+  "conflict_recall": [
+    3,
+    3
+  ],
+  "retrieval_accuracy": [
+    12,
+    12
+  ],
+  "citation_correctness": [
+    8,
+    8
+  ],
+  "unauthorized_disclosures": [
+    0,
+    3
+  ],
+  "synthetic_approval_turnaround_ms": [
+    1753,
+    2416
+  ],
+  "cases": {
+    "conflict": [
+      {
+        "topic": "customer-escalation",
+        "candidate": "support-decision",
+        "conflict": true,
+        "observed": true
+      },
+      {
+        "topic": "customer-escalation",
+        "candidate": "support-playbook",
+        "conflict": false,
+        "observed": false
+      },
+      {
+        "topic": "refund-approval",
+        "candidate": "refund-proposal",
+        "conflict": true,
+        "observed": true
+      },
+      {
+        "topic": "key-rotation",
+        "candidate": "rotation-legacy",
+        "conflict": true,
+        "observed": true
+      }
+    ],
+    "retrieval": [
+      {
+        "role": "employee",
+        "question": "What is the current escalation policy?",
+        "status": "verified",
+        "source": "support-decision",
+        "text": "48 hours",
+        "actual": "verified",
+        "matched": true
+      },
+      {
+        "role": "employee",
+        "question": "Which team owns the incident response process?",
+        "status": "verified",
+        "source": "incident-ownership",
+        "text": "Engineering owns",
+        "actual": "verified",
+        "matched": true
+      },
+      {
+        "role": "employee",
+        "question": "When was the escalation policy last verified?",
+        "status": "verified",
+        "source": "support-decision",
+        "text": "Last verified on",
+        "actual": "verified",
+        "matched": true
+      },
+      {
+        "role": "employee",
+        "question": "What changed in the escalation policy?",
+        "status": "verified",
+        "source": "support-decision",
+        "text": "24 hours",
+        "actual": "verified",
+        "matched": true
+      },
+      {
+        "role": "employee",
+        "question": "Can I access the internal security runbook?",
+        "status": "abstained",
+        "actual": "abstained",
+        "matched": true
+      },
+      {
+        "role": "support",
+        "question": "How do I open Quartz Vault?",
+        "status": "abstained",
+        "actual": "abstained",
+        "matched": true
+      },
+      {
+        "role": "security",
+        "question": "What does the security runbook say?",
+        "status": "verified",
+        "source": "quartz-containment",
+        "text": "Quartz Vault",
+        "actual": "verified",
+        "matched": true
+      },
+      {
+        "role": "employee",
+        "question": "Who books flights to Mars?",
+        "status": "abstained",
+        "actual": "abstained",
+        "matched": true
+      },
+      {
+        "role": "admin",
+        "question": "Show pilot feedback",
+        "status": "abstained",
+        "actual": "abstained",
+        "matched": true
+      },
+      {
+        "role": "security",
+        "question": "What is the access review policy?",
+        "status": "stale",
+        "actual": "stale",
+        "matched": true
+      },
+      {
+        "role": "employee",
+        "question": "What is the refund threshold?",
+        "status": "verified",
+        "source": "refund-authority",
+        "text": "USD 250",
+        "actual": "verified",
+        "matched": true
+      },
+      {
+        "role": "employee",
+        "question": "What is the expense policy?",
+        "status": "verified",
+        "source": "expense-guide",
+        "text": "itemized receipts",
+        "actual": "verified",
+        "matched": true
+      }
+    ],
+    "citations": [
+      {
+        "locator": "slack:support-decision",
+        "correct": true
+      },
+      {
+        "locator": "notion:incident-ownership",
+        "correct": true
+      },
+      {
+        "locator": "slack:support-decision",
+        "correct": true
+      },
+      {
+        "locator": "slack:support-decision",
+        "correct": true
+      },
+      {
+        "locator": "notion:support-escalation",
+        "correct": true
+      },
+      {
+        "locator": "operations:quartz-containment",
+        "correct": true
+      },
+      {
+        "locator": "notion:refund-authority",
+        "correct": true
+      },
+      {
+        "locator": "operations:expense-guide",
+        "correct": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ContextLedger · Northstar Labs</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#workspace">Skip to workspace</a>
+  <header class="masthead">
+    <div class="shell masthead-inner">
+      <div class="brand"><span class="mark" aria-hidden="true">✳</span> ContextLedger</div>
+      <div class="environment">Northstar Labs <span>·</span> Synthetic workspace</div>
+    </div>
+  </header>
+  <main class="shell" id="workspace">
+    <div class="intro">
+      <div>
+        <p class="eyebrow">Knowledge operations / 01</p>
+        <h1>Review Desk<span>.</span></h1>
+        <p>Submit, review, and verify the knowledge your team relies on.</p>
+      </div>
+      <form id="login" class="login">
+        <label for="token">Demo identity token</label>
+        <div class="input-row"><input id="token" type="password" autocomplete="off" required><button>Connect</button></div>
+        <p id="identity" class="fine">Run <code>npm run tokens</code> to open a test session.</p>
+      </form>
+    </div>
+    <nav class="tabs" aria-label="Workspace views">
+      <button data-panel="review" aria-pressed="true">01 <span>Review queue</span></button>
+      <button data-panel="contribute" aria-pressed="false">02 <span>Contribute</span></button>
+      <button data-panel="context" aria-pressed="false">03 <span>Trusted context</span></button>
+      <button data-panel="quality" aria-pressed="false">04 <span>Quality report</span></button>
+    </nav>
+    <p id="notice" class="notice" role="status" aria-live="polite">Connect with a demo token to open your queue.</p>
+    <section id="review" aria-label="Review queue">
+      <div class="queue">
+        <aside><div class="queue-heading"><h2>Cases</h2><button id="refresh-queue" class="subtle">Refresh queue</button></div><div id="cases"></div></aside>
+        <article id="case-detail" aria-label="Selected review"></article>
+      </div>
+    </section>
+    <section id="contribute" aria-label="Contribute knowledge" hidden>
+      <div class="contribution-grid">
+        <form id="contribution-form" class="tool-form contribution-form" hidden>
+          <h2>Propose knowledge</h2>
+          <div class="form-fields">
+            <div><label for="topic">Topic</label><select id="topic" required></select></div>
+            <div><label for="knowledge-type">Knowledge type</label><select id="knowledge-type" required></select></div>
+            <div><label for="classification">Audience</label><select id="classification" required></select></div>
+            <div class="full"><label for="contribution-title">Title</label><input id="contribution-title" required minlength="4" maxlength="150"></div>
+            <div class="full"><label for="knowledge-text">Knowledge text</label><textarea id="knowledge-text" rows="4" required minlength="20" maxlength="12000" aria-describedby="claim-hint"></textarea>
+              <p id="claim-hint" class="fine">Include any conditions and who should act.</p></div>
+            <div class="full"><label for="change-reason">Reason for the change</label><input id="change-reason" required minlength="10" maxlength="1000"></div>
+          </div>
+          <div class="actions"><button>Submit for review</button></div>
+        </form>
+        <article class="tool-form contribution-status">
+          <h2>Publication status</h2>
+          <p id="contribution-help">Connect as a department knowledge owner to see your topics.</p>
+          <div id="contribution-baseline"></div>
+          <div id="contribution-receipt" aria-live="polite"></div>
+        </article>
+      </div>
+    </section>
+    <section id="context" aria-label="Trusted context" hidden>
+      <form id="ask" class="tool-form">
+        <label for="question">Ask a knowledge question</label>
+        <div class="input-row">
+          <input id="question" required maxlength="300" value="What is the current escalation policy?"><button>Retrieve</button>
+        </div>
+      </form>
+      <div id="answer" class="results"></div>
+    </section>
+    <section id="quality" aria-label="Quality report" hidden>
+      <div class="tool-form"><h2>Knowledge health</h2><button id="run-monitor">Generate report</button></div>
+      <div id="report" class="results"></div>
+    </section>
+    <footer>ContextLedger <span>/</span> Northstar Labs demo <span>/</span> Evidence, decisions and review dates</footer>
+  </main>
+</body>
+</html>
